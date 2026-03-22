@@ -256,6 +256,16 @@ function renderWorkbench() {
       saveState();
     });
 
+    // Prevent the browser treating the text input as a tile drop target
+    nameInput.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'none';
+    });
+    nameInput.addEventListener('drop', e => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
     const picker = document.createElement('div');
     picker.className = 'color-picker';
     picker.setAttribute('role', 'radiogroup');
