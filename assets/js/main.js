@@ -1,9 +1,13 @@
 // ── State ──────────────────────────────────────────────────────────────────
+// v2: tiles identified by index (0-15), not by text string.
+//   state.words[i]         — canonical text for tile i
+//   state.leftWords        — number[] of indices in the word pool
+//   state.groups[g].words  — number[] of indices in each group
 
-const STORAGE_KEY = 'connectionsframe_v1';
+const STORAGE_KEY = 'connectionsframe_v2';
 
 let state = {
-  words: [],
+  words: Array(16).fill(''),
   leftWords: [],
   groups: [
     { name: '', color: null, words: [] },
@@ -13,8 +17,7 @@ let state = {
   ],
 };
 
-// Word currently being dragged
-let draggedWord = null;
+let draggedIdx = null; // index of the tile currently being dragged
 
 // ── Persistence ────────────────────────────────────────────────────────────
 
@@ -33,7 +36,7 @@ function loadState() {
 function clearState() {
   localStorage.removeItem(STORAGE_KEY);
   state = {
-    words: [],
+    words: Array(16).fill(''),
     leftWords: [],
     groups: [
       { name: '', color: null, words: [] },
@@ -44,14 +47,89 @@ function clearState() {
   };
 }
 
-// ── Entry screen ───────────────────────────────────────────────────────────
+// ── Guards ─────────────────────────────────────────────────────────────────
 
-// Split on any run of characters that are not alphanumeric, space, or apostrophe.
-// Covers: comma, semicolon, pipe, slash, tab, newline, dash-used-as-separator, etc.
+function canOpenWorkbench() {
+  return state.words.length === 16 && state.words.every(w => w && w.trim() !== '');
+}
+
+// All 16 indices must be accounted for across leftWords + groups
+function isWorkbenchInitialized() {
+  const total = state.leftWords.length +
+    state.groups.reduce((sum, g) => sum + g.words.length, 0);
+  return total === 16;
+}
+
+function initWorkbenchTiles() {
+  state.leftWords = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+  state.groups.forEach(g => { g.words = []; });
+  saveState();
+}
+
+// ── Accordion ──────────────────────────────────────────────────────────────
+
+const SECTION_IDS = ['instructions', 'words', 'workbench'];
+
+function openSection(id, scroll = true) {
+  SECTION_IDS.forEach(s => {
+    document.getElementById(`section-${s}`).open = (s === id);
+  });
+  if (scroll) {
+    const target = document.getElementById(`section-${id}`);
+    setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
+  }
+}
+
+function initAccordion() {
+  SECTION_IDS.forEach(id => {
+    const section = document.getElementById(`section-${id}`);
+    section.querySelector('summary').addEventListener('click', e => {
+      e.preventDefault();
+      // Clicking an open section collapses it
+      if (section.open) { section.open = false; return; }
+      // Guard: workbench needs 16 valid words
+      if (id === 'workbench' && !canOpenWorkbench()) return;
+      openSection(id);
+    });
+  });
+}
+
+// ── Status indicators ──────────────────────────────────────────────────────
+
+function updateStatus() {
+  // Words section badge
+  const filled = state.words.filter(w => w && w.trim() !== '').length;
+  const wordsEl = document.getElementById('words-status');
+  wordsEl.textContent = filled > 0 ? `${filled} / 16` : '';
+  wordsEl.classList.toggle('status--complete', filled === 16);
+
+  // Workbench section badge
+  const placed = state.groups.reduce((sum, g) => sum + g.words.length, 0);
+  const wbEl = document.getElementById('workbench-status');
+  wbEl.textContent = placed > 0 ? `${placed} tile${placed !== 1 ? 's' : ''} placed` : '';
+
+  // "Move to Workbench" button
+  document.getElementById('btn-to-workbench').disabled = !canOpenWorkbench();
+
+  // If a word was cleared and workbench is open, close it back to words section
+  if (!canOpenWorkbench() && document.getElementById('section-workbench').open) {
+    document.getElementById('section-workbench').open = false;
+    document.getElementById('section-words').open = true;
+  }
+}
+
+// ── Word entry ─────────────────────────────────────────────────────────────
+
+// Split on any run of characters that are not alphanumeric, space, or apostrophe
 const DELIM_RE = /[^a-zA-Z0-9 ']+/;
 
-function buildEntryForm() {
+function buildWordInputs() {
+  // Ensure 16 state.words slots exist
+  while (state.words.length < 16) state.words.push('');
+
   const container = document.getElementById('word-inputs');
+  container.innerHTML = '';
+
   for (let i = 0; i < 16; i++) {
     const input = document.createElement('input');
     input.type = 'text';
@@ -59,86 +137,80 @@ function buildEntryForm() {
     input.className = 'word-input';
     input.maxLength = 40;
     input.autocomplete = 'off';
+    input.value = state.words[i] || '';
+    input.classList.toggle('filled', !!(state.words[i] && state.words[i].trim()));
 
-    input.addEventListener('input', (e) => {
-      e.target.classList.toggle('filled', e.target.value.trim() !== '');
-      updateStartButton();
+    input.addEventListener('input', e => {
+      const val = e.target.value.trim();
+      state.words[i] = val;
+      e.target.classList.toggle('filled', val !== '');
+
+      // Live-sync: update any workbench tile(s) that represent index i
+      document.querySelectorAll(`[data-tile-idx="${i}"]`).forEach(t => {
+        t.textContent = val;
+      });
+
+      saveState();
+      updateStatus();
     });
 
-    // Paste into any input: if the pasted text contains a delimiter, auto-fill all boxes
-    input.addEventListener('paste', (e) => {
+    // Paste a delimited string into any box → auto-fill from that position
+    input.addEventListener('paste', e => {
       const text = (e.clipboardData || window.clipboardData).getData('text');
       const parts = text.split(DELIM_RE).map(s => s.trim()).filter(s => s !== '');
       if (parts.length > 1) {
         e.preventDefault();
         fillGridFromArray(parts, i);
       }
-      // Single word — let the browser handle it normally
     });
 
-    // Enter advances to next input
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const inputs = [...document.querySelectorAll('.word-input')];
-        const next = inputs[i + 1];
-        if (next) next.focus(); else document.getElementById('start-btn').focus();
-      }
+    // Enter key advances focus
+    input.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const inputs = [...document.querySelectorAll('.word-input')];
+      const next = inputs[i + 1];
+      if (next) next.focus(); else document.getElementById('btn-to-workbench').focus();
     });
 
     container.appendChild(input);
   }
 }
 
-// Fill grid inputs starting at offset, up to 16 total
+// Fill word inputs (and state) starting at offset; sync live to any open workbench
 function fillGridFromArray(words, offset = 0) {
   const inputs = [...document.querySelectorAll('.word-input')];
   words.forEach((word, j) => {
     const idx = offset + j;
-    if (idx < 16) {
-      inputs[idx].value = word;
-      inputs[idx].classList.toggle('filled', word !== '');
-    }
+    if (idx >= 16) return;
+    inputs[idx].value = word;
+    inputs[idx].classList.toggle('filled', word !== '');
+    state.words[idx] = word;
+    document.querySelectorAll(`[data-tile-idx="${idx}"]`).forEach(t => {
+      t.textContent = word;
+    });
   });
-  updateStartButton();
-  // Focus the next unfilled input (or start button)
-  const next = inputs.find(inp => inp.value.trim() === '');
-  if (next) next.focus(); else document.getElementById('start-btn').focus();
+  saveState();
+  updateStatus();
+  const next = [...document.querySelectorAll('.word-input')].find(inp => inp.value.trim() === '');
+  if (next) next.focus(); else document.getElementById('btn-to-workbench').focus();
 }
-
-function updateStartButton() {
-  const inputs = document.querySelectorAll('.word-input');
-  const allFilled = [...inputs].every(inp => inp.value.trim() !== '');
-  document.getElementById('start-btn').disabled = !allFilled;
-}
-
-function readEntryWords() {
-  return [...document.querySelectorAll('.word-input')].map(inp => inp.value.trim());
-}
-
-// ── Bulk textarea ───────────────────────────────────────────────────────────
 
 function initBulkInput() {
   const textarea = document.getElementById('bulk-input');
   const countEl  = document.getElementById('bulk-count');
-
   textarea.addEventListener('input', () => {
-    const lines = textarea.value
-      .split('\n')
-      .map(l => l.trim())
-      .filter(l => l !== '');
-
+    const lines = textarea.value.split('\n').map(l => l.trim()).filter(l => l !== '');
     const count = Math.min(lines.length, 16);
     countEl.textContent = `${count} / 16`;
     countEl.classList.toggle('complete', count === 16);
-
     fillGridFromArray(lines.slice(0, 16), 0);
   });
 }
 
 // ── Group sort order ────────────────────────────────────────────────────────
 
-// Purple → Blue → Green → Yellow → uncoloured (stable by original index)
+// Purple (hardest) at top → Yellow (easiest) at bottom
 const COLOR_ORDER = { purple: 0, blue: 1, green: 2, yellow: 3 };
 
 function getSortedGroupIndices() {
@@ -149,25 +221,26 @@ function getSortedGroupIndices() {
   });
 }
 
-// ── Workspace ──────────────────────────────────────────────────────────────
+// ── Workbench rendering ────────────────────────────────────────────────────
 
-function renderWorkspace() {
+function renderWorkbench() {
   // Left pool
   const sourceGrid = document.getElementById('source-grid');
   sourceGrid.innerHTML = '';
-  state.leftWords.forEach(word => sourceGrid.appendChild(createTile(word, false)));
+  state.leftWords.forEach(idx => sourceGrid.appendChild(createTile(idx, false)));
   setupDropZone(sourceGrid, 'source');
 
-  // Right groups — rendered in colour-sorted order
+  // Right groups — rendered in colour-priority order
   const container = document.getElementById('groups-container');
   container.innerHTML = '';
 
-  getSortedGroupIndices().forEach(idx => {
-    const group = state.groups[idx];
+  getSortedGroupIndices().forEach(g => {
+    const group = state.groups[g];
+
     const groupEl = document.createElement('div');
     groupEl.className = 'group';
     groupEl.dataset.color = group.color || '';
-    groupEl.dataset.groupIdx = String(idx);
+    groupEl.dataset.groupIdx = String(g);
 
     // ── Header: name input + colour picker ──
     const header = document.createElement('div');
@@ -178,8 +251,8 @@ function renderWorkspace() {
     nameInput.className = 'group-name';
     nameInput.placeholder = 'Name this group…';
     nameInput.value = group.name;
-    nameInput.addEventListener('input', (e) => {
-      state.groups[idx].name = e.target.value;
+    nameInput.addEventListener('input', e => {
+      state.groups[g].name = e.target.value;
       saveState();
     });
 
@@ -196,13 +269,13 @@ function renderWorkspace() {
       if (group.color === color) btn.classList.add('selected');
 
       btn.addEventListener('click', () => {
-        state.groups[idx].color = (state.groups[idx].color === color) ? null : color;
+        state.groups[g].color = (state.groups[g].color === color) ? null : color;
         saveState();
-        // Update colour indicator in-place, then animate the reorder
-        groupEl.dataset.color = state.groups[idx].color || '';
+        groupEl.dataset.color = state.groups[g].color || '';
         picker.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
-        if (state.groups[idx].color) btn.classList.add('selected');
+        if (state.groups[g].color) btn.classList.add('selected');
         animateGroupReorder();
+        updateStatus();
       });
 
       picker.appendChild(btn);
@@ -214,24 +287,26 @@ function renderWorkspace() {
     // ── Drop zone ──
     const dropZone = document.createElement('div');
     dropZone.className = 'tile-grid drop-zone';
-    dropZone.dataset.zone = `group-${idx}`;
-    dropZone.dataset.group = String(idx);
+    dropZone.dataset.zone = `group-${g}`;
+    dropZone.dataset.group = String(g);
 
-    group.words.forEach(word => dropZone.appendChild(createTile(word, true)));
-    setupDropZone(dropZone, `group-${idx}`);
+    group.words.forEach(idx => dropZone.appendChild(createTile(idx, true)));
+    setupDropZone(dropZone, `group-${g}`);
 
     groupEl.appendChild(header);
     groupEl.appendChild(dropZone);
     container.appendChild(groupEl);
   });
+
+  updateStatus();
 }
 
-// FLIP animation: reorder group elements in the DOM by colour, animating the transition.
+// FLIP animation: reorder group DOM elements by colour with a smooth transition
 function animateGroupReorder() {
   const container = document.getElementById('groups-container');
   const groupEls = [...container.children];
 
-  // Step 1 — record current positions (First)
+  // Step 1 — record positions before reorder (First)
   const firstTops = new Map(groupEls.map(el => [el, el.getBoundingClientRect().top]));
 
   // Step 2 — sort by colour priority and reorder in DOM (Last)
@@ -239,20 +314,16 @@ function animateGroupReorder() {
     const ca = COLOR_ORDER[a.dataset.color] ?? 4;
     const cb = COLOR_ORDER[b.dataset.color] ?? 4;
     if (ca !== cb) return ca - cb;
-    // tiebreak: original group index
     return parseInt(a.dataset.groupIdx) - parseInt(b.dataset.groupIdx);
   });
   groupEls.forEach(el => container.appendChild(el));
 
-  // Step 3 — invert: push each element back to where it was, then play to zero
+  // Steps 3 & 4 — invert and play
   groupEls.forEach(el => {
     const dy = firstTops.get(el) - el.getBoundingClientRect().top;
     if (dy === 0) return;
-
     el.style.transition = 'none';
     el.style.transform = `translateY(${dy}px)`;
-
-    // Double rAF ensures the browser has committed the style before we start the transition
     requestAnimationFrame(() => requestAnimationFrame(() => {
       el.style.transition = 'transform 0.38s cubic-bezier(0.4, 0, 0.2, 1)';
       el.style.transform = '';
@@ -266,38 +337,36 @@ function animateGroupReorder() {
 
 // ── Tiles ──────────────────────────────────────────────────────────────────
 
-// inGroup: true when the tile lives in a right-hand group (enables double-click to pool)
-function createTile(word, inGroup) {
+function createTile(idx, inGroup) {
   const tile = document.createElement('div');
   tile.className = 'tile';
-  tile.textContent = word;
+  tile.textContent = state.words[idx];
   tile.draggable = true;
-  tile.dataset.word = word;
+  tile.dataset.tileIdx = String(idx);
 
   if (inGroup) {
-    tile.title = 'Double-click to return to word pool';
     tile.classList.add('tile--in-group');
+    tile.title = 'Double-click to return to word pool';
   }
 
-  tile.addEventListener('dragstart', (e) => {
-    draggedWord = word;
+  tile.addEventListener('dragstart', e => {
+    draggedIdx = idx;
     tile.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', word); // required for Firefox
+    e.dataTransfer.setData('text/plain', String(idx)); // required for Firefox
   });
 
   tile.addEventListener('dragend', () => {
-    draggedWord = null;
+    draggedIdx = null;
     tile.classList.remove('dragging');
   });
 
-  // Double-click on a group tile sends it back to the word pool
   if (inGroup) {
     tile.addEventListener('dblclick', () => {
-      removeWordFromState(word);
-      state.leftWords.push(word);
+      removeIndexFromState(idx);
+      state.leftWords.push(idx);
       saveState();
-      renderWorkspace();
+      renderWorkbench();
     });
   }
 
@@ -307,103 +376,112 @@ function createTile(word, inGroup) {
 // ── Drop zones ─────────────────────────────────────────────────────────────
 
 function setupDropZone(zone, zoneName) {
-  zone.addEventListener('dragover', (e) => {
+  zone.addEventListener('dragover', e => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     zone.classList.add('drag-over');
   });
 
-  zone.addEventListener('dragleave', (e) => {
-    if (!zone.contains(e.relatedTarget)) {
-      zone.classList.remove('drag-over');
-    }
+  zone.addEventListener('dragleave', e => {
+    if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
   });
 
-  zone.addEventListener('drop', (e) => {
+  zone.addEventListener('drop', e => {
     e.preventDefault();
     zone.classList.remove('drag-over');
-    if (!draggedWord) return;
+    if (draggedIdx === null) return;
 
-    const word = draggedWord;
+    const idx = draggedIdx;
+    if (findIndexZone(idx) === zoneName) return; // same zone, no-op
 
-    // No-op if dropped in the same zone it came from
-    const currentZone = findWordZone(word);
-    if (currentZone === zoneName) return;
+    removeIndexFromState(idx);
 
-    // Remove from current location
-    removeWordFromState(word);
-
-    // Add to new location
     if (zoneName === 'source') {
-      state.leftWords.push(word);
+      state.leftWords.push(idx);
     } else {
-      const idx = parseInt(zone.dataset.group, 10);
-      state.groups[idx].words.push(word);
+      state.groups[parseInt(zone.dataset.group, 10)].words.push(idx);
     }
 
     saveState();
-    renderWorkspace();
+    renderWorkbench();
   });
 }
 
-function findWordZone(word) {
-  if (state.leftWords.includes(word)) return 'source';
-  for (let i = 0; i < state.groups.length; i++) {
-    if (state.groups[i].words.includes(word)) return `group-${i}`;
+function findIndexZone(idx) {
+  if (state.leftWords.includes(idx)) return 'source';
+  for (let g = 0; g < state.groups.length; g++) {
+    if (state.groups[g].words.includes(idx)) return `group-${g}`;
   }
   return null;
 }
 
-function removeWordFromState(word) {
-  state.leftWords = state.leftWords.filter(w => w !== word);
-  state.groups.forEach(g => { g.words = g.words.filter(w => w !== word); });
-}
-
-// ── Screen management ──────────────────────────────────────────────────────
-
-function showEntry() {
-  document.getElementById('entry-screen').style.display = '';
-  document.getElementById('workspace-screen').style.display = 'none';
-}
-
-function showWorkspace() {
-  document.getElementById('entry-screen').style.display = 'none';
-  document.getElementById('workspace-screen').style.display = '';
-  renderWorkspace();
+function removeIndexFromState(idx) {
+  state.leftWords = state.leftWords.filter(i => i !== idx);
+  state.groups.forEach(g => { g.words = g.words.filter(i => i !== idx); });
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  buildEntryForm();
-  initBulkInput();
+  const hasState = loadState();
 
-  document.getElementById('start-btn').addEventListener('click', () => {
-    state.words = readEntryWords();
-    state.leftWords = [...state.words];
-    state.groups = [
-      { name: '', color: null, words: [] },
-      { name: '', color: null, words: [] },
-      { name: '', color: null, words: [] },
-      { name: '', color: null, words: [] },
-    ];
+  buildWordInputs(); // populates inputs from state.words
+  initBulkInput();
+  initAccordion();
+  updateStatus();
+
+  // ── Navigation buttons ──
+  document.getElementById('btn-to-words').addEventListener('click', () => {
+    openSection('words');
+  });
+
+  document.getElementById('btn-to-workbench').addEventListener('click', () => {
+    if (!canOpenWorkbench()) return;
+    if (!isWorkbenchInitialized()) initWorkbenchTiles();
+    renderWorkbench();
+    openSection('workbench');
+  });
+
+  document.getElementById('reset-words-btn').addEventListener('click', () => {
+    if (!confirm('Reset all words? This will also clear your workbench.')) return;
+    state.words = Array(16).fill('');
+    state.leftWords = [];
+    state.groups.forEach(g => { g.words = []; });
     saveState();
-    showWorkspace();
+    buildWordInputs();
+    document.getElementById('bulk-input').value = '';
+    document.getElementById('bulk-count').textContent = '0 / 16';
+    updateStatus();
+  });
+
+  document.getElementById('reset-workbench-btn').addEventListener('click', () => {
+    if (!confirm('Reset workbench? All tiles will return to the pool and groups will be cleared.')) return;
+    state.leftWords = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+    state.groups.forEach(g => { g.words = []; g.name = ''; g.color = null; });
+    saveState();
+    renderWorkbench();
   });
 
   document.getElementById('reset-btn').addEventListener('click', () => {
-    if (!confirm('Start over? This will clear your current work.')) return;
+    if (!confirm('Start over? This will clear all words and your workbench.')) return;
     clearState();
-    document.querySelectorAll('.word-input').forEach(inp => {
-      inp.value = '';
-      inp.classList.remove('filled');
-    });
-    document.getElementById('start-btn').disabled = true;
-    showEntry();
+    buildWordInputs(); // rebuild inputs with empty state
+    document.getElementById('bulk-input').value = '';
+    document.getElementById('bulk-count').textContent = '0 / 16';
+    updateStatus();
+    openSection('instructions');
   });
 
-  // Restore previous session if present
-  if (loadState() && state.words.length === 16) {
-    showWorkspace();
+  // ── Decide which section to open on load ──
+  if (hasState && state.words.some(w => w && w.trim() !== '')) {
+    if (canOpenWorkbench() && isWorkbenchInitialized()) {
+      renderWorkbench();
+      openSection('workbench', false);
+    } else {
+      openSection('words', false);
+    }
+  } else {
+    // First visit or empty state — open Instructions
+    openSection('instructions', false);
   }
 });

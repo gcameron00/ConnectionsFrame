@@ -8,8 +8,11 @@
   </head>
   <body>
 
-    <header class="site-header site-header--workspace">
-      <h1><a href="/" style="text-decoration:none;color:inherit">ConnectionsFrame</a></h1>
+    <header class="site-header">
+      <div class="site-header__brand">
+        <h1><a href="/" style="text-decoration:none;color:inherit"><span class="brand-cap">C</span>onnections<span class="brand-cap">F</span>rame</a></h1>
+        <p>A thinking tool for <a href="https://www.nytimes.com/games/connections" target="_blank" rel="noopener">NYT Connections</a></p>
+      </div>
       <nav class="site-nav">
         <a href="/" class="nav-link">Home</a>
         <a href="/about/" class="nav-link active">About</a>
@@ -23,61 +26,64 @@
         <p>
           ConnectionsFrame is a browser-based thinking tool to help you reason through the daily
           <a href="https://www.nytimes.com/games/connections" target="_blank" rel="noopener">NYT Connections</a>
-          puzzle before committing to an answer.
-        </p>
-        <p>
-          The puzzle gives you 16 words and asks you to sort them into four groups of four,
-          each sharing a hidden connection. ConnectionsFrame gives you a private workspace
-          to explore and test those connections without pressure.
+          puzzle before committing to an answer. The puzzle gives you 16 words and asks you to sort
+          them into four groups of four, each sharing a hidden connection.
         </p>
 
         <h2 class="about-heading">How it works</h2>
         <ol class="about-steps">
           <li>
-            <strong>Enter the 16 words</strong> from today's puzzle — type them in one by one,
-            paste a comma- (or otherwise) delimited list into any box, or paste one word per line
-            into the text area.
+            <strong>Enter the 16 words</strong> — type them into the grid one by one,
+            paste a delimited list (comma, semicolon, pipe, or any other separator) into any box,
+            or paste one word per line into the text area.
           </li>
           <li>
-            <strong>Open the workspace.</strong> The left panel shows all 16 words as draggable tiles.
-            The right panel has four empty group slots.
+            <strong>Move to the Workbench</strong> once all 16 are filled.
+            The left panel shows all 16 words as draggable tiles; the right panel has four empty group slots.
           </li>
           <li>
-            <strong>Drag tiles</strong> from the left into a group on the right to test a potential connection.
-            Drag them back, or between groups, as your thinking evolves.
+            <strong>Drag tiles</strong> from the left into a group on the right to test a potential
+            connection. Drag them back, or between groups, as your thinking evolves.
           </li>
           <li>
-            <strong>Name each group</strong> using the text field above it — write down your hypothesis
-            for what the connection is.
+            <strong>Name each group</strong> using the text field — write your hypothesis for what
+            the connection is.
           </li>
           <li>
-            <strong>Predict the difficulty colour.</strong> NYT rates each group from easiest to hardest:
+            <strong>Predict the difficulty colour.</strong> NYT rates groups from easiest to hardest:
             <span class="chip yellow">Yellow</span>
             <span class="chip green">Green</span>
             <span class="chip blue">Blue</span>
             <span class="chip purple">Purple</span>.
-            Pick which you think each group is.
+            Groups animate into colour order (Purple at top) as you assign them.
+          </li>
+          <li>
+            <strong>Double-click</strong> any tile in a group to instantly return it to the word pool.
+          </li>
+          <li>
+            You can return to <strong>Today's Words</strong> at any time to fix a typo —
+            changes sync live to the workbench tiles.
           </li>
         </ol>
 
         <h2 class="about-heading">Privacy</h2>
         <p>
-          ConnectionsFrame stores everything in your browser's <code>localStorage</code> only —
-          nothing is sent to any server. Multiple people can use the same deployed site at the
-          same time without seeing or interfering with each other's thinking.
-          Your session persists between page refreshes until you click <em>Start Over</em>.
+          ConnectionsFrame stores everything in your browser's <code>localStorage</code> — nothing
+          is sent to any server. Multiple people can use the same deployed site simultaneously
+          without seeing or interfering with each other's thinking. Your session persists across
+          page refreshes until you click <em>Start Over</em>.
         </p>
 
         <h2 class="about-heading">Tips</h2>
         <ul class="about-tips">
-          <li>Start with the groups you're most confident about — move those tiles first.</li>
+          <li>Start with the groups you're most confident about and move those tiles first.</li>
           <li>Use the group name field to capture your reasoning, not just the label.</li>
-          <li>If you're stuck, try colour-coding your guesses to see where your confidence is.</li>
-          <li>You can drag tiles between right-hand groups without going back to the left pool.</li>
+          <li>Colour-coding your confidence can help reveal where you're uncertain.</li>
+          <li>You can drag tiles directly between right-hand groups without going back to the pool.</li>
         </ul>
 
         <div class="about-cta">
-          <a href="/" class="cta-btn">← Back to today's puzzle</a>
+          <a href="/" class="cta-btn">← Try today's puzzle</a>
         </div>
 
       </div>

@@ -8,71 +8,106 @@
   </head>
   <body>
 
-    <!-- ── Entry screen ── -->
-    <div id="entry-screen" class="screen">
-      <header class="site-header">
+    <header class="site-header">
+      <div class="site-header__brand">
         <h1>ConnectionsFrame</h1>
         <p>A thinking tool for <a href="https://www.nytimes.com/games/connections" target="_blank" rel="noopener">NYT Connections</a></p>
-        <nav class="site-nav">
-          <a href="about/" class="nav-link">About</a>
-        </nav>
-      </header>
-      <main class="entry-main">
+      </div>
+      <nav class="site-nav">
+        <a href="about/" class="nav-link">About</a>
+      </nav>
+    </header>
 
-        <details class="instructions">
-          <summary>How to use</summary>
-          <div class="instructions-body">
-            <ol>
-              <li>Enter the 16 words from today's <a href="https://www.nytimes.com/games/connections" target="_blank" rel="noopener">NYT Connections</a> puzzle using any method below.</li>
-              <li>Click <strong>Start Thinking</strong> to open your workspace.</li>
-              <li><strong>Left panel:</strong> all 16 words as draggable tiles.</li>
-              <li><strong>Right panel:</strong> four groups — drag tiles in to build your hypotheses.</li>
-              <li>Name each group and pick a predicted difficulty colour (Yellow = easiest → Purple = hardest).</li>
-              <li>Drag tiles back to the left or between groups at any time.</li>
-              <li>Your work is saved automatically in this browser only — other users can't see it.</li>
+    <main class="accordion">
+
+      <!-- ── 1. Instructions ── -->
+      <details id="section-instructions" class="accordion-section">
+        <summary class="accordion-summary">
+          <span class="accordion-label">
+            <span class="accordion-num">1</span>
+            Using ConnectionsFrame
+          </span>
+          <span class="accordion-chevron"></span>
+        </summary>
+        <div class="accordion-body">
+          <div class="entry-body">
+            <ol class="instructions-list">
+              <li>Enter the 16 words from today's <a href="https://www.nytimes.com/games/connections" target="_blank" rel="noopener">NYT Connections</a> puzzle in <strong>Today's Words</strong> below.</li>
+              <li>Click <strong>Move to Workbench</strong> once all 16 are filled — the button activates automatically.</li>
+              <li><strong>Left panel:</strong> all 16 words as draggable tiles. <strong>Right panel:</strong> four empty group slots.</li>
+              <li>Drag tiles into groups to test a connection. Name each group and pick a predicted difficulty colour —
+                <span class="chip yellow">Yellow</span> (easiest) through <span class="chip purple">Purple</span> (hardest).
+                Groups animate into colour order automatically.</li>
+              <li><strong>Double-click</strong> any tile in a group to return it to the word pool.</li>
+              <li>You can return to <strong>Today's Words</strong> at any time to fix a typo — edits sync live to the workbench.</li>
+              <li>Your progress saves automatically in this browser. Other users cannot see it.</li>
             </ol>
-          </div>
-        </details>
-
-        <div class="entry-card">
-          <p class="entry-card-title">Type into the grid — or paste a delimited list into any box</p>
-          <div id="word-inputs" class="word-grid"></div>
-
-          <div class="or-divider">or</div>
-
-          <p class="bulk-label">One word / phrase per line</p>
-          <div class="bulk-wrap">
-            <textarea id="bulk-input" class="bulk-input" rows="4"
-              placeholder="Word or phrase 1&#10;Word or phrase 2&#10;Word or phrase 3&#10;…"></textarea>
-            <span id="bulk-count" class="bulk-count">0 / 16</span>
+            <button class="btn-primary" id="btn-to-words">Go to Today's Words →</button>
           </div>
         </div>
+      </details>
 
-        <button id="start-btn" disabled>Start Thinking →</button>
+      <!-- ── 2. Today's Words ── -->
+      <details id="section-words" class="accordion-section">
+        <summary class="accordion-summary">
+          <span class="accordion-label">
+            <span class="accordion-num">2</span>
+            Today's Words
+          </span>
+          <span class="accordion-status" id="words-status"></span>
+          <span class="accordion-chevron"></span>
+        </summary>
+        <div class="accordion-body">
+          <div class="entry-body">
+            <p class="section-hint">Type into the grid — or paste a delimited list into any box</p>
+            <div id="word-inputs" class="word-grid"></div>
 
-      </main>
-    </div>
+            <div class="or-divider">or</div>
 
-    <!-- ── Workspace screen ── -->
-    <div id="workspace-screen" class="screen" style="display:none">
-      <header class="site-header site-header--workspace">
-        <h1>ConnectionsFrame</h1>
-        <button id="reset-btn">↩ Start Over</button>
-      </header>
-      <main class="workspace">
+            <p class="section-hint">One word / phrase per line</p>
+            <div class="bulk-wrap">
+              <textarea id="bulk-input" class="bulk-input" rows="4"
+                placeholder="Word or phrase 1&#10;Word or phrase 2&#10;Word or phrase 3&#10;…"></textarea>
+              <span id="bulk-count" class="bulk-count">0 / 16</span>
+            </div>
 
-        <section class="panel left-panel" aria-label="Word pool">
-          <h2 class="panel-title">Words</h2>
-          <div id="source-grid" class="tile-grid drop-zone" data-zone="source"></div>
-        </section>
+            <div class="btn-row">
+              <button class="btn-primary" id="btn-to-workbench" disabled>Move to Workbench →</button>
+              <button class="btn-secondary" id="reset-words-btn">Reset Words</button>
+            </div>
+          </div>
+        </div>
+      </details>
 
-        <section class="panel right-panel" aria-label="Your groups">
-          <h2 class="panel-title">Your Groups</h2>
-          <div id="groups-container"></div>
-        </section>
+      <!-- ── 3. Workbench ── -->
+      <details id="section-workbench" class="accordion-section">
+        <summary class="accordion-summary">
+          <span class="accordion-label">
+            <span class="accordion-num">3</span>
+            Workbench
+          </span>
+          <span class="accordion-status" id="workbench-status"></span>
+          <span class="accordion-chevron"></span>
+        </summary>
+        <div class="accordion-body accordion-body--workspace">
+          <div class="workspace">
+            <section class="panel left-panel" aria-label="Word pool">
+              <h2 class="panel-title">Words</h2>
+              <div id="source-grid" class="tile-grid drop-zone" data-zone="source"></div>
+            </section>
+            <section class="panel right-panel" aria-label="Your groups">
+              <h2 class="panel-title">Your Groups</h2>
+              <div id="groups-container"></div>
+            </section>
+          </div>
+          <div class="workbench-footer">
+            <button class="btn-secondary" id="reset-workbench-btn">Reset Workbench</button>
+            <button class="btn-secondary" id="reset-btn">↩ Start Over</button>
+          </div>
+        </div>
+      </details>
 
-      </main>
-    </div>
+    </main>
 
     <script src="assets/js/main.js"></script>
   </body>
