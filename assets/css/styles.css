@@ -4,7 +4,7 @@
 /* ── Base ── */
 body {
   font-family: 'Helvetica Neue', Arial, sans-serif;
-  background: #f2f2f0;
+  background: #fdfbee;
   color: #1a1a1b;
   min-height: 100vh;
 }
@@ -455,9 +455,26 @@ button { font-family: inherit; cursor: pointer; }
 .about-heading {
   font-size: 1rem;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   margin-top: 1rem;
+}
+
+.site-footer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2.5rem;
+  font-size: 0.72rem;
+  color: #999;
+  line-height: 1.6;
+  border-top: 1px solid #e8e8e4;
+}
+
+.about-disclaimer {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e8e8e4;
+  font-size: 0.82rem;
+  color: #888;
+  line-height: 1.7;
 }
 .about-steps,
 .about-tips { padding-left: 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; }
