@@ -152,6 +152,7 @@ function buildWordInputs() {
 
       saveState();
       updateStatus();
+      syncBulkTextarea(); // keep textarea in step with the grid
     });
 
     // Paste a delimited string into any box → auto-fill from that position
@@ -161,6 +162,7 @@ function buildWordInputs() {
       if (parts.length > 1) {
         e.preventDefault();
         fillGridFromArray(parts, i);
+        syncBulkTextarea();
       }
     });
 
@@ -177,8 +179,9 @@ function buildWordInputs() {
   }
 }
 
-// Fill word inputs (and state) starting at offset; sync live to any open workbench
-function fillGridFromArray(words, offset = 0) {
+// Fill word inputs (and state) starting at offset.
+// clearRemainder: when true, clears all inputs/state beyond the supplied words (used by textarea).
+function fillGridFromArray(words, offset = 0, clearRemainder = false) {
   const inputs = [...document.querySelectorAll('.word-input')];
   words.forEach((word, j) => {
     const idx = offset + j;
@@ -190,10 +193,38 @@ function fillGridFromArray(words, offset = 0) {
       t.textContent = word;
     });
   });
+
+  // Clear any inputs beyond what was just filled (fixes stale last-word bug)
+  if (clearRemainder) {
+    const end = Math.min(offset + words.length, 16);
+    for (let idx = end; idx < 16; idx++) {
+      inputs[idx].value = '';
+      inputs[idx].classList.remove('filled');
+      state.words[idx] = '';
+      document.querySelectorAll(`[data-tile-idx="${idx}"]`).forEach(t => {
+        t.textContent = '';
+      });
+    }
+  }
+
   saveState();
   updateStatus();
-  const next = [...document.querySelectorAll('.word-input')].find(inp => inp.value.trim() === '');
+  const next = inputs.find(inp => inp.value.trim() === '');
   if (next) next.focus(); else document.getElementById('btn-to-workbench').focus();
+}
+
+// Sync the textarea to match the current grid contents.
+// Only called when the grid changes — never when the textarea itself is the source,
+// to avoid resetting cursor position mid-edit.
+function syncBulkTextarea() {
+  const textarea = document.getElementById('bulk-input');
+  const countEl  = document.getElementById('bulk-count');
+  // Show all filled words as a clean list (no blank lines for empty slots)
+  const filled = state.words.filter(w => w && w.trim() !== '');
+  textarea.value = filled.join('\n');
+  const count = filled.length;
+  countEl.textContent = `${count} / 16`;
+  countEl.classList.toggle('complete', count === 16);
 }
 
 function initBulkInput() {
@@ -204,7 +235,9 @@ function initBulkInput() {
     const count = Math.min(lines.length, 16);
     countEl.textContent = `${count} / 16`;
     countEl.classList.toggle('complete', count === 16);
-    fillGridFromArray(lines.slice(0, 16), 0);
+    // clearRemainder=true so deleting a line also clears the now-empty trailing input
+    fillGridFromArray(lines.slice(0, 16), 0, true);
+    // Do NOT call syncBulkTextarea here — would reset cursor position mid-edit
   });
 }
 
@@ -239,12 +272,13 @@ function renderWorkbench() {
 
     const groupEl = document.createElement('div');
     groupEl.className = 'group';
-    groupEl.dataset.color = group.color || '';
+    groupEl.dataset.color = group.color || '';   // used by FLIP sort
     groupEl.dataset.groupIdx = String(g);
 
     // ── Header: name input + colour picker ──
     const header = document.createElement('div');
     header.className = 'group-header';
+    header.dataset.color = group.color || '';    // used by CSS colour indicator
 
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
@@ -281,7 +315,8 @@ function renderWorkbench() {
       btn.addEventListener('click', () => {
         state.groups[g].color = (state.groups[g].color === color) ? null : color;
         saveState();
-        groupEl.dataset.color = state.groups[g].color || '';
+        groupEl.dataset.color = state.groups[g].color || '';    // for FLIP sort
+        header.dataset.color  = state.groups[g].color || '';    // for CSS indicator
         picker.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
         if (state.groups[g].color) btn.classList.add('selected');
         animateGroupReorder();
@@ -436,6 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const hasState = loadState();
 
   buildWordInputs(); // populates inputs from state.words
+  syncBulkTextarea(); // populate textarea to match any restored state
   initBulkInput();
   initAccordion();
   updateStatus();
