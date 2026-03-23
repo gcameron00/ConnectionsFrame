@@ -336,6 +336,12 @@ function renderWorkbench() {
     dropZone.dataset.group = String(g);
 
     group.words.forEach(idx => dropZone.appendChild(createTile(idx, true)));
+    // Fill remaining slots with dashed placeholders (groups always hold 4 tiles)
+    for (let p = group.words.length; p < 4; p++) {
+      const ph = document.createElement('div');
+      ph.className = 'tile-placeholder';
+      dropZone.appendChild(ph);
+    }
     setupDropZone(dropZone, `group-${g}`);
 
     groupEl.appendChild(header);
