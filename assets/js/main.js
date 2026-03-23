@@ -120,8 +120,8 @@ function updateStatus() {
 
 // ── Word entry ─────────────────────────────────────────────────────────────
 
-// Split on any run of characters that are not alphanumeric, space, or apostrophe
-const DELIM_RE = /[^a-zA-Z0-9 ']+/;
+// Split on explicit separator characters only — hyphens are treated as part of words
+const DELIM_RE = /[\n,\t|;]+/;
 
 function buildWordInputs() {
   // Ensure 16 state.words slots exist
