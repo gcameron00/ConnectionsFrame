@@ -389,6 +389,13 @@ button { font-family: inherit; cursor: pointer; }
   pointer-events: none;
 }
 
+/* The specific next slot in the focused group */
+.tile-placeholder--focused {
+  border-color: #5ba4cf;
+  border-style: dashed;
+  background: rgba(91, 164, 207, 0.08);
+}
+
 /* ── Drop zones ── */
 .drop-zone {
   border-radius: 6px;

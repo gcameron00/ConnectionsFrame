@@ -15,6 +15,7 @@ let state = {
     { name: '', color: null, words: [] },
     { name: '', color: null, words: [] },
   ],
+  focusedGroup: 0, // group that receives double-clicked pool tiles
 };
 
 let draggedIdx = null; // index of the tile currently being dragged
@@ -28,7 +29,11 @@ function saveState() {
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) { state = JSON.parse(raw); return true; }
+    if (raw) {
+      state = JSON.parse(raw);
+      if (state.focusedGroup === undefined) state.focusedGroup = 0; // migrate old saves
+      return true;
+    }
   } catch (_) {}
   return false;
 }
@@ -44,6 +49,7 @@ function clearState() {
       { name: '', color: null, words: [] },
       { name: '', color: null, words: [] },
     ],
+    focusedGroup: 0,
   };
 }
 
@@ -63,6 +69,7 @@ function isWorkbenchInitialized() {
 function initWorkbenchTiles() {
   state.leftWords = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
   state.groups.forEach(g => { g.words = []; });
+  state.focusedGroup = 0;
   saveState();
 }
 
@@ -340,9 +347,22 @@ function renderWorkbench() {
     for (let p = group.words.length; p < 4; p++) {
       const ph = document.createElement('div');
       ph.className = 'tile-placeholder';
+      // Highlight only the very next slot in the focused group
+      if (g === state.focusedGroup && p === group.words.length) {
+        ph.classList.add('tile-placeholder--focused');
+      }
       dropZone.appendChild(ph);
     }
     setupDropZone(dropZone, `group-${g}`);
+
+    // Clicking the group area (not a tile/input/button) sets it as the focus target
+    groupEl.addEventListener('click', e => {
+      if (e.target.closest('input, button, .tile')) return;
+      if (state.focusedGroup === g) return;
+      state.focusedGroup = g;
+      saveState();
+      renderWorkbench();
+    });
 
     groupEl.appendChild(header);
     groupEl.appendChild(dropZone);
@@ -398,6 +418,8 @@ function createTile(idx, inGroup) {
   if (inGroup) {
     tile.classList.add('tile--in-group');
     tile.title = 'Double-click to return to word pool';
+  } else {
+    tile.title = 'Double-click to send to focused group';
   }
 
   tile.addEventListener('dragstart', e => {
@@ -416,6 +438,20 @@ function createTile(idx, inGroup) {
     tile.addEventListener('dblclick', () => {
       removeIndexFromState(idx);
       state.leftWords.push(idx);
+      saveState();
+      renderWorkbench();
+    });
+  } else {
+    tile.addEventListener('dblclick', () => {
+      const fg = state.focusedGroup;
+      if (state.groups[fg].words.length >= 4) return; // focused group is full
+      state.leftWords = state.leftWords.filter(i => i !== idx);
+      state.groups[fg].words.push(idx);
+      // If focused group is now full, advance focus to next group with space
+      if (state.groups[fg].words.length === 4) {
+        const next = getSortedGroupIndices().find(i => state.groups[i].words.length < 4);
+        if (next !== undefined) state.focusedGroup = next;
+      }
       saveState();
       renderWorkbench();
     });
@@ -510,6 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Reset workbench? All tiles will return to the pool and groups will be cleared.')) return;
     state.leftWords = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
     state.groups.forEach(g => { g.words = []; g.name = ''; g.color = null; });
+    state.focusedGroup = 0;
     saveState();
     renderWorkbench();
   });
