@@ -14,7 +14,7 @@ An overview of how to use the tool. Defaults open on first visit, collapsed ther
 ### 2. Enter Today's Words
 Enter the 16 words or phrases from today's puzzle using any of:
 - **Type directly** into the 4×4 grid of inputs
-- **Paste a delimited list** into any box — the app splits on commas, semicolons, pipes, or any other non-alphanumeric delimiter
+- **Paste a delimited list** into any box — the app splits on commas, semicolons, tabs, pipes, or newlines (hyphens are treated as part of words)
 - **Paste / type one per line** into the text area below the grid
 
 Words can be edited at any time, even after the workbench is open. Changes sync live to the workbench tiles. Defaults open when fewer than 16 words are entered.
@@ -26,6 +26,7 @@ The main thinking workspace. Defaults open when 16 words are entered.
 - **Right panel:** four group slots — drag tiles in to build your hypotheses
 - **Name each group** using the text field above it
 - **Predict the difficulty colour** — Yellow (easiest) → Green → Blue → Purple (hardest). Groups animate into colour order (Purple at top) as you assign them.
+- **Double-click** any tile in the word pool to send it to the **focused group** — click any group area to set which group receives double-clicked tiles; the next open slot in the focused group is highlighted
 - **Double-click** any tile in a group to return it instantly to the word pool
 
 ## User flow
