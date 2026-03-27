@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Changelog — ConnectionsFrame</title>
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+  </head>
+  <body>
+
+    <header class="site-header">
+      <div class="site-header__brand">
+        <h1><a href="/" style="text-decoration:none;color:inherit">ConnectionsFrame</a></h1>
+        <p>A thinking tool for <a href="https://www.nytimes.com/games/connections" target="_blank" rel="noopener">NYT Connections</a></p>
+      </div>
+      <nav class="site-nav">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/about/" class="nav-link">About</a>
+        <a href="/about/changelog/" class="nav-link active">Changelog</a>
+      </nav>
+    </header>
+
+    <main class="about-main">
+      <div class="about-content">
+        <h2 class="about-heading" style="margin-top:0">Changelog</h2>
+        <p>A record of user-facing changes to ConnectionsFrame.</p>
+        <div id="changelog-body"></div>
+      </div>
+    </main>
+
+    <script src="/assets/js/changelog.js"></script>
+    <script>
+      const container = document.getElementById('changelog-body');
+      CHANGELOG.forEach(entry => {
+        const section = document.createElement('div');
+        section.className = 'cl-entry';
+
+        const header = document.createElement('div');
+        header.className = 'cl-header';
+        header.innerHTML =
+          `<span class="cl-version">${entry.version}</span>` +
+          `<span class="cl-date">${entry.date}</span>` +
+          `<span class="cl-title">${entry.title}</span>`;
+
+        const ul = document.createElement('ul');
+        ul.className = 'cl-list';
+        entry.items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          ul.appendChild(li);
+        });
+
+        section.appendChild(header);
+        section.appendChild(ul);
+        container.appendChild(section);
+      });
+    </script>
+
+  </body>
+</html>

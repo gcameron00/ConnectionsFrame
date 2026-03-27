@@ -15,7 +15,10 @@ let state = {
     { name: '', color: null, words: [] },
     { name: '', color: null, words: [] },
   ],
-  focusedGroup: 0, // group that receives double-clicked pool tiles
+  focusedGroup: 0,   // group that receives double-clicked pool tiles
+  wordsDate: null,      // YYYY-MM-DD when first word was added to a blank list
+  staleDateAsked: null, // YYYY-MM-DD we last prompted about stale words
+  lastSeenVersion: null, // changelog version last acknowledged by the user
 };
 
 let draggedIdx = null; // index of the tile currently being dragged
@@ -50,6 +53,9 @@ function clearState() {
       { name: '', color: null, words: [] },
     ],
     focusedGroup: 0,
+    wordsDate: null,
+    staleDateAsked: null,
+    lastSeenVersion: null,
   };
 }
 
@@ -71,6 +77,20 @@ function initWorkbenchTiles() {
   state.groups.forEach(g => { g.words = []; });
   state.focusedGroup = 0;
   saveState();
+}
+
+// ── Date tracking ──────────────────────────────────────────────────────────
+
+function getToday() {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+// Call after any word update — stamps the date the first time words are added to a blank list.
+function maybeSetWordsDate() {
+  if (state.wordsDate) return;
+  if (state.words.some(w => w && w.trim() !== '')) {
+    state.wordsDate = getToday();
+  }
 }
 
 // ── Accordion ──────────────────────────────────────────────────────────────
@@ -157,6 +177,7 @@ function buildWordInputs() {
         t.textContent = val;
       });
 
+      maybeSetWordsDate();
       saveState();
       updateStatus();
       syncBulkTextarea(); // keep textarea in step with the grid
@@ -214,6 +235,7 @@ function fillGridFromArray(words, offset = 0, clearRemainder = false) {
     }
   }
 
+  maybeSetWordsDate();
   saveState();
   updateStatus();
   const next = inputs.find(inp => inp.value.trim() === '');
@@ -507,6 +529,90 @@ function removeIndexFromState(idx) {
   state.groups.forEach(g => { g.words = g.words.filter(i => i !== idx); });
 }
 
+// ── Stale-words check ──────────────────────────────────────────────────────
+
+// Called on load. If saved words are from a previous day and we haven't already
+// asked today, prompts the user to clear. Returns true if cleared.
+async function checkStaleWords() {
+  if (!state.wordsDate) return false;
+  const today = getToday();
+  if (state.wordsDate >= today) return false;       // same day or future (clock skew)
+  if (state.staleDateAsked === today) return false; // already asked today
+  if (!state.words.some(w => w && w.trim() !== '')) return false; // nothing to clear
+
+  const accepted = await customConfirm(
+    `These words were entered on ${state.wordsDate}. Clear them for today's puzzle?`
+  );
+  if (accepted) {
+    state.words = Array(16).fill('');
+    state.wordsDate = null;
+    state.staleDateAsked = null;
+    state.leftWords = [];
+    state.groups.forEach(g => { g.words = []; g.name = ''; g.color = null; });
+    saveState();
+    buildWordInputs();
+    document.getElementById('bulk-input').value = '';
+    document.getElementById('bulk-count').textContent = '0 / 16';
+    updateStatus();
+    return true;
+  } else {
+    state.staleDateAsked = today;
+    saveState();
+    return false;
+  }
+}
+
+// ── New-version notification ────────────────────────────────────────────────
+
+// Called on load after checkStaleWords. Shows a "What's new" dialog for any
+// changelog entries newer than what the user last acknowledged.
+async function checkNewVersion() {
+  // First visit with this feature — treat as having seen 2026.000 so existing
+  // users will be shown 2026.001 and any future entries, but not a blank dialog.
+  if (!state.lastSeenVersion) {
+    state.lastSeenVersion = '2026.000';
+    saveState();
+  }
+  if (state.lastSeenVersion >= CHANGELOG_VERSION) return; // nothing new
+
+  const newEntries = CHANGELOG.filter(e => e.version > state.lastSeenVersion);
+  if (newEntries.length === 0) return;
+
+  const body = document.getElementById('whats-new-body');
+  body.innerHTML = '';
+  newEntries.forEach(entry => {
+    if (newEntries.length > 1) {
+      const ver = document.createElement('p');
+      ver.className = 'whats-new-version';
+      ver.textContent = `${entry.version} — ${entry.date}`;
+      body.appendChild(ver);
+    }
+    const ul = document.createElement('ul');
+    ul.className = 'whats-new-list';
+    entry.items.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+  });
+
+  await new Promise(resolve => {
+    const dialog = document.getElementById('whats-new-dialog');
+    const ok = document.getElementById('whats-new-ok');
+    function onOk() {
+      dialog.close();
+      ok.removeEventListener('click', onOk);
+      resolve();
+    }
+    ok.addEventListener('click', onOk);
+    dialog.showModal();
+  });
+
+  state.lastSeenVersion = CHANGELOG_VERSION;
+  saveState();
+}
+
 // ── Custom confirm (replaces window.confirm, blocked by some mobile browsers) ──
 
 function customConfirm(message) {
@@ -536,7 +642,7 @@ function customConfirm(message) {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const hasState = loadState();
 
   buildWordInputs(); // populates inputs from state.words
@@ -560,6 +666,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('reset-words-btn').addEventListener('click', async () => {
     if (!await customConfirm('Reset all words? This will also clear your workbench.')) return;
     state.words = Array(16).fill('');
+    state.wordsDate = null;
+    state.staleDateAsked = null;
     state.leftWords = [];
     state.groups.forEach(g => { g.words = []; });
     saveState();
@@ -585,11 +693,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('bulk-input').value = '';
     document.getElementById('bulk-count').textContent = '0 / 16';
     updateStatus();
-    openSection('instructions');
+    openSection('words');
   });
 
   // ── Decide which section to open on load ──
-  if (hasState && state.words.some(w => w && w.trim() !== '')) {
+  const wasCleared = await checkStaleWords();
+  await checkNewVersion();
+
+  if (wasCleared) {
+    openSection('words', false);
+  } else if (hasState && state.words.some(w => w && w.trim() !== '')) {
     if (canOpenWorkbench() && isWorkbenchInitialized()) {
       renderWorkbench();
       openSection('workbench', false);
