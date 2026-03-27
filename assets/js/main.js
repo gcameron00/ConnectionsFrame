@@ -507,6 +507,33 @@ function removeIndexFromState(idx) {
   state.groups.forEach(g => { g.words = g.words.filter(i => i !== idx); });
 }
 
+// ── Custom confirm (replaces window.confirm, blocked by some mobile browsers) ──
+
+function customConfirm(message) {
+  return new Promise(resolve => {
+    const dialog = document.getElementById('confirm-dialog');
+    document.getElementById('confirm-message').textContent = message;
+    const ok     = document.getElementById('confirm-ok');
+    const cancel = document.getElementById('confirm-cancel');
+
+    function cleanup(result) {
+      dialog.close();
+      ok.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      dialog.removeEventListener('cancel', onNativeCancel);
+      resolve(result);
+    }
+    function onOk()           { cleanup(true);  }
+    function onCancel()       { cleanup(false); }
+    function onNativeCancel() { cleanup(false); } // ESC key
+
+    ok.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    dialog.addEventListener('cancel', onNativeCancel);
+    dialog.showModal();
+  });
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -530,8 +557,8 @@ document.addEventListener('DOMContentLoaded', () => {
     openSection('workbench');
   });
 
-  document.getElementById('reset-words-btn').addEventListener('click', () => {
-    if (!confirm('Reset all words? This will also clear your workbench.')) return;
+  document.getElementById('reset-words-btn').addEventListener('click', async () => {
+    if (!await customConfirm('Reset all words? This will also clear your workbench.')) return;
     state.words = Array(16).fill('');
     state.leftWords = [];
     state.groups.forEach(g => { g.words = []; });
@@ -542,8 +569,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStatus();
   });
 
-  document.getElementById('reset-workbench-btn').addEventListener('click', () => {
-    if (!confirm('Reset workbench? All tiles will return to the pool and groups will be cleared.')) return;
+  document.getElementById('reset-workbench-btn').addEventListener('click', async () => {
+    if (!await customConfirm('Reset workbench? All tiles will return to the pool and groups will be cleared.')) return;
     state.leftWords = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
     state.groups.forEach(g => { g.words = []; g.name = ''; g.color = null; });
     state.focusedGroup = 0;
@@ -551,8 +578,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderWorkbench();
   });
 
-  document.getElementById('reset-btn').addEventListener('click', () => {
-    if (!confirm('Start over? This will clear all words and your workbench.')) return;
+  document.getElementById('reset-btn').addEventListener('click', async () => {
+    if (!await customConfirm('Start over? This will clear all words and your workbench.')) return;
     clearState();
     buildWordInputs(); // rebuild inputs with empty state
     document.getElementById('bulk-input').value = '';
