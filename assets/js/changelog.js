@@ -1,5 +1,5 @@
 // ── Changelog ──────────────────────────────────────────────────────────────
-// Version format: YYYY.xx  (xx is a zero-padded int, resets each calendar year)
+// Version format: YYYY.xxx  (xxx is a zero-padded int, resets each calendar year)
 // Keep newest entry first. After adding an entry, bump CHANGELOG_VERSION to match.
 // This file is loaded before main.js (index.html) and standalone (about/changelog/).
 
