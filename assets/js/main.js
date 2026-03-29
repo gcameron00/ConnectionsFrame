@@ -529,6 +529,35 @@ function removeIndexFromState(idx) {
   state.groups.forEach(g => { g.words = g.words.filter(i => i !== idx); });
 }
 
+// ── Stale-words message ────────────────────────────────────────────────────
+
+function formatStaleMessage() {
+  const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTH_NAMES = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+  const COUNT_WORDS = ['', 'one', 'two', 'three', 'four', 'five', 'six'];
+
+  // Parse as local time to get the correct day-of-week for the user's timezone
+  const [wy, wm, wd] = state.wordsDate.split('-').map(Number);
+  const wordsLocal = new Date(wy, wm - 1, wd);
+  const [ty, tm, td] = getToday().split('-').map(Number);
+  const todayLocal  = new Date(ty, tm - 1, td);
+
+  const diffDays = Math.round((todayLocal - wordsLocal) / 864e5);
+  const dayName   = DAY_NAMES[wordsLocal.getDay()];
+  const monthName = MONTH_NAMES[wordsLocal.getMonth()];
+  const dayNum    = wordsLocal.getDate();
+  const suffix    = `Clear them for today's puzzle?`;
+
+  if (diffDays === 1) {
+    return `The current words were entered yesterday, ${dayName} ${dayNum} ${monthName}. ${suffix}`;
+  } else if (diffDays <= 6) {
+    return `The current words were entered ${COUNT_WORDS[diffDays]} days ago, on ${dayName} ${dayNum} ${monthName}. ${suffix}`;
+  } else {
+    return `The current words are very old, entered on ${dayName} ${dayNum} ${monthName} ${wy}. ${suffix}`;
+  }
+}
+
 // ── Stale-words check ──────────────────────────────────────────────────────
 
 // Called on load. If saved words are from a previous day and we haven't already
@@ -540,9 +569,7 @@ async function checkStaleWords() {
   if (state.staleDateAsked === today) return false; // already asked today
   if (!state.words.some(w => w && w.trim() !== '')) return false; // nothing to clear
 
-  const accepted = await customConfirm(
-    `These words were entered on ${state.wordsDate}. Clear them for today's puzzle?`
-  );
+  const accepted = await customConfirm(formatStaleMessage());
   if (accepted) {
     state.words = Array(16).fill('');
     state.wordsDate = null;
