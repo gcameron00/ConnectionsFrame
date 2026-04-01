@@ -43,6 +43,8 @@ function loadState() {
 
 function clearState() {
   localStorage.removeItem(STORAGE_KEY);
+  clearImageTiles();
+  imageMode = false;
   state = {
     words: Array(16).fill(''),
     leftWords: [],
@@ -62,6 +64,7 @@ function clearState() {
 // ── Guards ─────────────────────────────────────────────────────────────────
 
 function canOpenWorkbench() {
+  if (imageMode && getImageTiles()) return true;
   return state.words.length === 16 && state.words.every(w => w && w.trim() !== '');
 }
 
@@ -125,10 +128,15 @@ function initAccordion() {
 
 function updateStatus() {
   // Words section badge
-  const filled = state.words.filter(w => w && w.trim() !== '').length;
   const wordsEl = document.getElementById('words-status');
-  wordsEl.textContent = filled > 0 ? `${filled} / 16` : '';
-  wordsEl.classList.toggle('status--complete', filled === 16);
+  if (imageMode && getImageTiles()) {
+    wordsEl.textContent = 'Image';
+    wordsEl.classList.add('status--complete');
+  } else {
+    const filled = state.words.filter(w => w && w.trim() !== '').length;
+    wordsEl.textContent = filled > 0 ? `${filled} / 16` : '';
+    wordsEl.classList.toggle('status--complete', filled === 16);
+  }
 
   // Workbench section badge
   const placed = state.groups.reduce((sum, g) => sum + g.words.length, 0);
@@ -433,9 +441,20 @@ function animateGroupReorder() {
 function createTile(idx, inGroup) {
   const tile = document.createElement('div');
   tile.className = 'tile';
-  tile.textContent = state.words[idx];
   tile.draggable = true;
   tile.dataset.tileIdx = String(idx);
+
+  const imageTiles = imageMode ? getImageTiles() : null;
+  if (imageTiles && imageTiles[idx]) {
+    tile.classList.add('tile--image');
+    const img = document.createElement('img');
+    img.src = imageTiles[idx];
+    img.className = 'tile-img';
+    img.draggable = false;
+    tile.appendChild(img);
+  } else {
+    tile.textContent = state.words[idx];
+  }
 
   if (inGroup) {
     tile.classList.add('tile--in-group');
@@ -527,6 +546,219 @@ function findIndexZone(idx) {
 function removeIndexFromState(idx) {
   state.leftWords = state.leftWords.filter(i => i !== idx);
   state.groups.forEach(g => { g.words = g.words.filter(i => i !== idx); });
+}
+
+// ── Image mode ─────────────────────────────────────────────────────────────
+
+const IMAGE_STORAGE_KEY = 'connectionsframe_images';
+let imageMode = false;
+
+function getImageTiles() {
+  try {
+    const raw = sessionStorage.getItem(IMAGE_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) { return null; }
+}
+function saveImageTiles(tiles) {
+  sessionStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(tiles));
+}
+function clearImageTiles() {
+  sessionStorage.removeItem(IMAGE_STORAGE_KEY);
+}
+
+function enterImageMode() {
+  imageMode = true;
+  document.getElementById('text-entry-ui').hidden = true;
+  document.getElementById('image-entry-ui').hidden = false;
+  const hasTiles = !!getImageTiles();
+  document.getElementById('btn-image-to-workbench').hidden = !hasTiles;
+}
+
+function exitImageMode() {
+  imageMode = false;
+  clearImageTiles();
+  document.getElementById('text-entry-ui').hidden = false;
+  document.getElementById('image-entry-ui').hidden = true;
+  // Reset state so text entry starts fresh
+  state.words = Array(16).fill('');
+  state.wordsDate = null;
+  state.staleDateAsked = null;
+  state.leftWords = [];
+  state.groups.forEach(g => { g.words = []; g.name = ''; g.color = null; });
+  saveState();
+  buildWordInputs();
+  syncBulkTextarea();
+  updateStatus();
+}
+
+// ── Crop tool ───────────────────────────────────────────────────────────────
+
+let cropHandles = { x1: 0, y1: 0, x2: 0, y2: 0 };
+let draggingHandle = null;
+let dragOffset = { x: 0, y: 0 };
+
+function openCropTool(imageUrl) {
+  const img = document.getElementById('crop-source-img');
+  img.onload = () => {
+    // Init handles to 5% inset from each edge
+    const w = img.offsetWidth;
+    const h = img.offsetHeight;
+    cropHandles = {
+      x1: Math.round(w * 0.05), y1: Math.round(h * 0.05),
+      x2: Math.round(w * 0.95), y2: Math.round(h * 0.95),
+    };
+    positionHandles();
+    drawCropOverlay();
+  };
+  img.src = imageUrl;
+  document.getElementById('image-crop-overlay').hidden = false;
+}
+
+function closeCropTool() {
+  document.getElementById('image-crop-overlay').hidden = true;
+}
+
+function positionHandles() {
+  const tl = document.getElementById('handle-tl');
+  const br = document.getElementById('handle-br');
+  tl.style.left = cropHandles.x1 + 'px';
+  tl.style.top  = cropHandles.y1 + 'px';
+  br.style.left = cropHandles.x2 + 'px';
+  br.style.top  = cropHandles.y2 + 'px';
+}
+
+function drawCropOverlay() {
+  const canvas = document.getElementById('crop-canvas');
+  const img    = document.getElementById('crop-source-img');
+  canvas.width  = img.offsetWidth;
+  canvas.height = img.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  const { x1, y1, x2, y2 } = cropHandles;
+
+  // Darken outside selection
+  ctx.fillStyle = 'rgba(0,0,0,0.52)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(x1, y1, x2 - x1, y2 - y1);
+
+  // Inner grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 1;
+  const cw = (x2 - x1) / 4;
+  const rh = (y2 - y1) / 4;
+  for (let i = 1; i < 4; i++) {
+    ctx.beginPath(); ctx.moveTo(x1 + i * cw, y1); ctx.lineTo(x1 + i * cw, y2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1, y1 + i * rh); ctx.lineTo(x2, y1 + i * rh); ctx.stroke();
+  }
+  // Outer border
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+}
+
+function initCropTool() {
+  // Handle dragging — mouse
+  ['handle-tl', 'handle-br'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('mousedown', e => {
+      draggingHandle = id;
+      dragOffset.x = e.clientX - parseInt(el.style.left || 0);
+      dragOffset.y = e.clientY - parseInt(el.style.top  || 0);
+      e.preventDefault();
+    });
+    el.addEventListener('touchstart', e => {
+      draggingHandle = id;
+      const t = e.touches[0];
+      dragOffset.x = t.clientX - parseInt(el.style.left || 0);
+      dragOffset.y = t.clientY - parseInt(el.style.top  || 0);
+      e.preventDefault();
+    }, { passive: false });
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!draggingHandle) return;
+    moveHandle(draggingHandle, e.clientX, e.clientY);
+  });
+  document.addEventListener('mouseup', () => { draggingHandle = null; });
+  document.addEventListener('touchmove', e => {
+    if (!draggingHandle) return;
+    moveHandle(draggingHandle, e.touches[0].clientX, e.touches[0].clientY);
+    e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('touchend', () => { draggingHandle = null; });
+
+  document.getElementById('crop-cancel-btn').addEventListener('click', closeCropTool);
+  document.getElementById('crop-confirm-btn').addEventListener('click', confirmCrop);
+}
+
+function moveHandle(id, clientX, clientY) {
+  const stage     = document.getElementById('image-crop-stage');
+  const stageRect = stage.getBoundingClientRect();
+  const img       = document.getElementById('crop-source-img');
+  const MIN = 40;
+
+  let x = Math.max(0, Math.min(clientX - stageRect.left - dragOffset.x, img.offsetWidth));
+  let y = Math.max(0, Math.min(clientY - stageRect.top  - dragOffset.y, img.offsetHeight));
+
+  if (id === 'handle-tl') {
+    cropHandles.x1 = Math.min(x, cropHandles.x2 - MIN);
+    cropHandles.y1 = Math.min(y, cropHandles.y2 - MIN);
+  } else {
+    cropHandles.x2 = Math.max(x, cropHandles.x1 + MIN);
+    cropHandles.y2 = Math.max(y, cropHandles.y1 + MIN);
+  }
+  positionHandles();
+  drawCropOverlay();
+}
+
+function confirmCrop() {
+  const img = document.getElementById('crop-source-img');
+  const { x1, y1, x2, y2 } = cropHandles;
+  const sx = img.naturalWidth  / img.offsetWidth;
+  const sy = img.naturalHeight / img.offsetHeight;
+  const ax1 = x1 * sx, ay1 = y1 * sy;
+  const tw  = (x2 - x1) * sx / 4;
+  const th  = (y2 - y1) * sy / 4;
+
+  const tiles = [];
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 4; col++) {
+      const c = document.createElement('canvas');
+      c.width = Math.round(tw); c.height = Math.round(th);
+      c.getContext('2d').drawImage(img,
+        ax1 + col * tw, ay1 + row * th, tw, th,
+        0, 0, c.width, c.height);
+      tiles.push(c.toDataURL('image/jpeg', 0.85));
+    }
+  }
+
+  saveImageTiles(tiles);
+  closeCropTool();
+
+  // Stamp date and initialise workbench
+  state.wordsDate = getToday();
+  if (!isWorkbenchInitialized()) initWorkbenchTiles();
+  saveState();
+  updateStatus();
+
+  // Show "View in Workbench" button and jump there
+  document.getElementById('btn-image-to-workbench').hidden = false;
+  renderWorkbench();
+  openSection('workbench');
+}
+
+// Attach global paste listener for images (only active in image mode)
+function initImagePaste() {
+  document.addEventListener('paste', e => {
+    if (!imageMode) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        openCropTool(URL.createObjectURL(item.getAsFile()));
+        break;
+      }
+    }
+  });
 }
 
 // ── Stale-words message ────────────────────────────────────────────────────
@@ -672,10 +904,20 @@ function customConfirm(message) {
 document.addEventListener('DOMContentLoaded', async () => {
   const hasState = loadState();
 
+  // Restore image mode if tiles survived the session
+  if (getImageTiles()) {
+    imageMode = true;
+    document.getElementById('text-entry-ui').hidden = true;
+    document.getElementById('image-entry-ui').hidden = false;
+    document.getElementById('btn-image-to-workbench').hidden = false;
+  }
+
   buildWordInputs(); // populates inputs from state.words
   syncBulkTextarea(); // populate textarea to match any restored state
   initBulkInput();
   initAccordion();
+  initCropTool();
+  initImagePaste();
   updateStatus();
 
   // ── Navigation buttons ──
@@ -690,8 +932,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     openSection('workbench');
   });
 
+  document.getElementById('btn-image-mode').addEventListener('click', enterImageMode);
+  document.getElementById('btn-exit-image-mode').addEventListener('click', exitImageMode);
+  document.getElementById('btn-image-to-workbench').addEventListener('click', () => {
+    if (!isWorkbenchInitialized()) initWorkbenchTiles();
+    renderWorkbench();
+    openSection('workbench');
+  });
+
   document.getElementById('reset-words-btn').addEventListener('click', async () => {
     if (!await customConfirm('Reset all words? This will also clear your workbench.')) return;
+    clearImageTiles();
+    imageMode = false;
+    document.getElementById('text-entry-ui').hidden = false;
+    document.getElementById('image-entry-ui').hidden = true;
     state.words = Array(16).fill('');
     state.wordsDate = null;
     state.staleDateAsked = null;

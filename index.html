@@ -59,22 +59,41 @@
         </summary>
         <div class="accordion-body">
           <div class="entry-body">
-            <p class="section-hint">Type into the grid — or paste a delimited list into any box</p>
-            <div id="word-inputs" class="word-grid"></div>
 
-            <div class="or-divider">or</div>
+            <div id="text-entry-ui">
+              <p class="section-hint">Type into the grid — or paste a delimited list into any box</p>
+              <div id="word-inputs" class="word-grid"></div>
 
-            <p class="section-hint">One word / phrase per line</p>
-            <div class="bulk-wrap">
-              <textarea id="bulk-input" class="bulk-input" rows="4"
-                placeholder="Word or phrase 1&#10;Word or phrase 2&#10;Word or phrase 3&#10;…"></textarea>
-              <span id="bulk-count" class="bulk-count">0 / 16</span>
+              <div class="or-divider">or</div>
+
+              <p class="section-hint">One word / phrase per line</p>
+              <div class="bulk-wrap">
+                <textarea id="bulk-input" class="bulk-input" rows="4"
+                  placeholder="Word or phrase 1&#10;Word or phrase 2&#10;Word or phrase 3&#10;…"></textarea>
+                <span id="bulk-count" class="bulk-count">0 / 16</span>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn-primary" id="btn-to-workbench" disabled>Move to Workbench →</button>
+                <button class="btn-secondary" id="reset-words-btn">Reset Words</button>
+              </div>
+              <button class="btn-link" id="btn-image-mode">Use image instead</button>
             </div>
 
-            <div class="btn-row">
-              <button class="btn-primary" id="btn-to-workbench" disabled>Move to Workbench →</button>
-              <button class="btn-secondary" id="reset-words-btn">Reset Words</button>
+            <div id="image-entry-ui" hidden>
+              <p class="image-mode-notice">
+                Image tiles are <strong>session-only</strong> — they won't be saved if you close or refresh this tab.
+              </p>
+              <div id="image-paste-zone" class="image-paste-zone" tabindex="0">
+                <span class="image-paste-label">Paste your screenshot here</span>
+                <span class="image-paste-hint">Ctrl+V / ⌘V anywhere on the page</span>
+              </div>
+              <div class="btn-row">
+                <button class="btn-primary" id="btn-image-to-workbench" hidden>View in Workbench →</button>
+                <button class="btn-secondary" id="btn-exit-image-mode">← Back to text entry</button>
+              </div>
             </div>
+
           </div>
         </div>
       </details>
@@ -129,6 +148,22 @@
         <button id="whats-new-ok" class="btn-primary">Got it</button>
       </div>
     </dialog>
+
+    <div id="image-crop-overlay" class="image-crop-overlay" hidden>
+      <div class="image-crop-modal">
+        <p class="image-crop-hint">Drag the corner handles to align the grid with the puzzle tiles.</p>
+        <div id="image-crop-stage" class="image-crop-stage">
+          <img id="crop-source-img" class="crop-source-img" alt="" />
+          <canvas id="crop-canvas" class="crop-canvas"></canvas>
+          <div id="handle-tl" class="crop-handle"></div>
+          <div id="handle-br" class="crop-handle"></div>
+        </div>
+        <div class="image-crop-actions">
+          <button class="btn-secondary" id="crop-cancel-btn">Cancel</button>
+          <button class="btn-primary" id="crop-confirm-btn">Use these tiles →</button>
+        </div>
+      </div>
+    </div>
 
     <script src="assets/js/changelog.js"></script>
     <script src="assets/js/main.js"></script>
