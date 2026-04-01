@@ -372,11 +372,13 @@ function renderWorkbench() {
     dropZone.dataset.zone = `group-${g}`;
     dropZone.dataset.group = String(g);
 
+    const imageData = imageMode ? getImageTiles() : null;
     group.words.forEach(idx => dropZone.appendChild(createTile(idx, true)));
     // Fill remaining slots with dashed placeholders (groups always hold 4 tiles)
     for (let p = group.words.length; p < 4; p++) {
       const ph = document.createElement('div');
       ph.className = 'tile-placeholder';
+      if (imageData) { ph.style.aspectRatio = String(imageData.aspectRatio); ph.style.minHeight = '0'; }
       // Highlight only the very next slot in the focused group
       if (g === state.focusedGroup && p === group.words.length) {
         ph.classList.add('tile-placeholder--focused');

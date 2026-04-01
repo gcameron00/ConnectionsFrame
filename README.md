@@ -16,8 +16,11 @@ Enter the 16 words or phrases from today's puzzle using any of:
 - **Type directly** into the 4×4 grid of inputs
 - **Paste a delimited list** into any box — the app splits on commas, semicolons, tabs, pipes, or newlines (hyphens are treated as part of words)
 - **Paste / type one per line** into the text area below the grid
+- **Image mode** — paste or upload a screenshot of the puzzle; a crop tool lets you align a 4×4 grid to the tiles, then splits the image into 16 draggable image tiles in the workbench
 
 Words can be edited at any time, even after the workbench is open. Changes sync live to the workbench tiles. Defaults open when fewer than 16 words are entered.
+
+> **Image mode note:** image tiles are session-only — they are stored in `sessionStorage` and will not survive closing the tab.
 
 ### 3. Workbench
 The main thinking workspace. Defaults open when 16 words are entered.
@@ -44,6 +47,8 @@ Each section is independently collapsible. Opening one via a button closes the p
 ## Privacy
 
 ConnectionsFrame uses **localStorage** only — nothing is sent to any server. Multiple users can use the same deployed instance simultaneously without seeing or interfering with each other's work. Sessions persist across page refreshes until the user clicks *Start Over*.
+
+Image mode uses **sessionStorage** for the cropped tile data — also local-only, but cleared when the tab is closed.
 
 ## Tech stack
 
@@ -84,5 +89,6 @@ ConnectionsFrame/
     ├── css/
     │   └── styles.css
     └── js/
+        ├── changelog.js
         └── main.js
 ```

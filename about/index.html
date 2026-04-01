@@ -35,8 +35,12 @@
         <ol class="about-steps">
           <li>
             <strong>Enter the 16 words</strong> — type them into the grid one by one,
-            paste a delimited list (comma, semicolon, pipe, or any other separator) into any box,
+            paste a delimited list (comma, semicolon, pipe, tab, or newline) into any box,
             or paste one word per line into the text area.
+            For puzzles with visual tiles (colour, size, formatting), switch to
+            <strong>image mode</strong>: paste or upload a screenshot, then drag two corner
+            handles to align a 4×4 grid overlay to the puzzle tiles — the app crops and uses
+            them directly. Image tiles are session-only and will not survive closing the tab.
           </li>
           <li>
             <strong>Move to the Workbench</strong> once all 16 are filled.
@@ -78,6 +82,8 @@
           is sent to any server. Multiple people can use the same deployed site simultaneously
           without seeing or interfering with each other's thinking. Your session persists across
           page refreshes until you click <em>Start Over</em>.
+          In image mode, tile data is held in <code>sessionStorage</code> instead — also
+          local-only, but cleared when you close the tab.
         </p>
 
         <h2 class="about-heading">Tips</h2>
