@@ -64,7 +64,7 @@ function clearState() {
 // ── Guards ─────────────────────────────────────────────────────────────────
 
 function canOpenWorkbench() {
-  if (imageMode && getImageTiles()) return true;
+  if (imageMode && getImageTiles()?.tiles) return true;
   return state.words.length === 16 && state.words.every(w => w && w.trim() !== '');
 }
 
@@ -129,7 +129,7 @@ function initAccordion() {
 function updateStatus() {
   // Words section badge
   const wordsEl = document.getElementById('words-status');
-  if (imageMode && getImageTiles()) {
+  if (imageMode && getImageTiles()?.tiles) {
     wordsEl.textContent = 'Image';
     wordsEl.classList.add('status--complete');
   } else {
@@ -444,11 +444,12 @@ function createTile(idx, inGroup) {
   tile.draggable = true;
   tile.dataset.tileIdx = String(idx);
 
-  const imageTiles = imageMode ? getImageTiles() : null;
-  if (imageTiles && imageTiles[idx]) {
+  const imageData = imageMode ? getImageTiles() : null;
+  if (imageData && imageData.tiles[idx]) {
     tile.classList.add('tile--image');
+    tile.style.aspectRatio = String(imageData.aspectRatio);
     const img = document.createElement('img');
-    img.src = imageTiles[idx];
+    img.src = imageData.tiles[idx];
     img.className = 'tile-img';
     img.draggable = false;
     tile.appendChild(img);
@@ -553,14 +554,15 @@ function removeIndexFromState(idx) {
 const IMAGE_STORAGE_KEY = 'connectionsframe_images';
 let imageMode = false;
 
+// Returns { tiles: string[], aspectRatio: number } or null
 function getImageTiles() {
   try {
     const raw = sessionStorage.getItem(IMAGE_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch (_) { return null; }
 }
-function saveImageTiles(tiles) {
-  sessionStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(tiles));
+function saveImageTiles(tiles, aspectRatio) {
+  sessionStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify({ tiles, aspectRatio }));
 }
 function clearImageTiles() {
   sessionStorage.removeItem(IMAGE_STORAGE_KEY);
@@ -570,7 +572,7 @@ function enterImageMode() {
   imageMode = true;
   document.getElementById('text-entry-ui').hidden = true;
   document.getElementById('image-entry-ui').hidden = false;
-  const hasTiles = !!getImageTiles();
+  const hasTiles = !!getImageTiles()?.tiles;
   document.getElementById('btn-image-to-workbench').hidden = !hasTiles;
 }
 
@@ -661,15 +663,17 @@ function initCropTool() {
     const el = document.getElementById(id);
     el.addEventListener('mousedown', e => {
       draggingHandle = id;
-      dragOffset.x = e.clientX - parseInt(el.style.left || 0);
-      dragOffset.y = e.clientY - parseInt(el.style.top  || 0);
+      const stageRect = document.getElementById('image-crop-stage').getBoundingClientRect();
+      dragOffset.x = e.clientX - stageRect.left - parseInt(el.style.left || 0);
+      dragOffset.y = e.clientY - stageRect.top  - parseInt(el.style.top  || 0);
       e.preventDefault();
     });
     el.addEventListener('touchstart', e => {
       draggingHandle = id;
+      const stageRect = document.getElementById('image-crop-stage').getBoundingClientRect();
       const t = e.touches[0];
-      dragOffset.x = t.clientX - parseInt(el.style.left || 0);
-      dragOffset.y = t.clientY - parseInt(el.style.top  || 0);
+      dragOffset.x = t.clientX - stageRect.left - parseInt(el.style.left || 0);
+      dragOffset.y = t.clientY - stageRect.top  - parseInt(el.style.top  || 0);
       e.preventDefault();
     }, { passive: false });
   });
@@ -731,7 +735,7 @@ function confirmCrop() {
     }
   }
 
-  saveImageTiles(tiles);
+  saveImageTiles(tiles, tw / th);
   closeCropTool();
 
   // Stamp date and initialise workbench
@@ -748,6 +752,7 @@ function confirmCrop() {
 
 // Attach global paste listener for images (only active in image mode)
 function initImagePaste() {
+  // Keyboard paste (Ctrl/Cmd+V)
   document.addEventListener('paste', e => {
     if (!imageMode) return;
     const items = e.clipboardData?.items;
@@ -758,6 +763,33 @@ function initImagePaste() {
         break;
       }
     }
+  });
+
+  // "Paste image" button — uses Clipboard API (works on iOS Safari 16.4+)
+  document.getElementById('btn-paste-image').addEventListener('click', async () => {
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const imageType = item.types.find(t => t.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          openCropTool(URL.createObjectURL(blob));
+          return;
+        }
+      }
+      alert('No image found in clipboard. Copy a screenshot first, then tap Paste image.');
+    } catch (_) {
+      alert('Could not read clipboard. Use the Upload / Photo Library button instead.');
+    }
+  });
+
+  // File input — covers photo library on iOS and file picker on desktop
+  document.getElementById('image-file-input').addEventListener('change', e => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    openCropTool(URL.createObjectURL(file));
+    // Reset so the same file can be re-selected if needed
+    e.target.value = '';
   });
 }
 
@@ -905,7 +937,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const hasState = loadState();
 
   // Restore image mode if tiles survived the session
-  if (getImageTiles()) {
+  if (getImageTiles()?.tiles) {
     imageMode = true;
     document.getElementById('text-entry-ui').hidden = true;
     document.getElementById('image-entry-ui').hidden = false;
@@ -981,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const wasCleared = await checkStaleWords();
   await checkNewVersion();
 
-  const hasTiles = imageMode && getImageTiles();
+  const hasTiles = imageMode && getImageTiles()?.tiles;
   if (wasCleared) {
     openSection('words', false);
   } else if (hasTiles || (hasState && state.words.some(w => w && w.trim() !== ''))) {
