@@ -981,9 +981,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const wasCleared = await checkStaleWords();
   await checkNewVersion();
 
+  const hasTiles = imageMode && getImageTiles();
   if (wasCleared) {
     openSection('words', false);
-  } else if (hasState && state.words.some(w => w && w.trim() !== '')) {
+  } else if (hasTiles || (hasState && state.words.some(w => w && w.trim() !== ''))) {
     if (canOpenWorkbench() && isWorkbenchInitialized()) {
       renderWorkbench();
       openSection('workbench', false);
