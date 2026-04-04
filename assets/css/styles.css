@@ -303,11 +303,17 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ── Workbench layout ── */
 .workspace {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "words groups"
+    "hints groups";
   gap: 1.25rem;
   padding: 1.25rem;
-  align-items: flex-start;
 }
+.left-panel  { grid-area: words; }
+.right-panel { grid-area: groups; }
+.hints-panel { grid-area: hints; }
 
 .btn-row {
   display: flex;
@@ -780,10 +786,112 @@ button { font-family: inherit; cursor: pointer; }
 /* override align-self:flex-start from .btn-primary inside the dialog */
 .confirm-buttons .btn-primary { align-self: auto; }
 
+/* ── Personal hints — workbench panel ── */
+.hints-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.hints-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  overflow-y: auto;
+}
+.hints-panel-empty {
+  font-size: 0.82rem;
+  color: #aaa;
+}
+.hint-chip {
+  padding: 0.4rem 0.65rem;
+  background: #fdf9ea;
+  border: 1px solid #d4c68a;
+  border-left: 3px solid #d4c68a;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  cursor: pointer;
+  user-select: none;
+  transition: border-left-color 0.15s, background 0.15s;
+}
+.hint-chip:hover { background: #f7f0d0; }
+.hint-chip--active {
+  border-left-color: #60b868;
+  background: #f0f9f0;
+}
+
+/* ── Personal hints — section 4 manager ── */
+.hints-manager { display: flex; flex-direction: column; gap: 0.75rem; max-width: 520px; }
+.hint-add-row  { display: flex; gap: 0.5rem; }
+.hint-new-input {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid #d4c68a;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  background: #fdf9ea;
+  transition: border-color 0.15s;
+}
+.hint-new-input:focus { outline: none; border-color: #1a1a1b; }
+.hint-add-row .btn-primary { align-self: auto; }
+
+.hints-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.hint-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fdf9ea;
+  border: 1px solid #d4c68a;
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  cursor: default;
+}
+.hint-item.hint-over  { background: #e2d68e; }
+.hint-item.hint-dragging { opacity: 0.35; }
+.hint-drag-handle {
+  color: #c4b870;
+  font-size: 0.9rem;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  letter-spacing: -1px;
+}
+.hint-drag-handle:active { cursor: grabbing; }
+.hint-text {
+  flex: 1;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin: -1px -3px;
+}
+.hint-text:focus {
+  outline: none;
+  background: #e2d68e;
+}
+.hint-delete {
+  background: none;
+  border: none;
+  color: #c4b870;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  flex-shrink: 0;
+  transition: color 0.12s;
+}
+.hint-delete:hover { color: #c0392b; }
+
 /* ── Responsive ── */
 @media (max-width: 680px) {
-  .workspace { flex-direction: column; padding: 0.75rem; gap: 0.75rem; }
-  .left-panel, .right-panel { flex: none; width: 100%; }
+  .workspace {
+    grid-template-columns: 1fr;
+    grid-template-areas: "words" "groups" "hints";
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
   .tile { font-size: 0.65rem; padding: 0.6rem 0.2rem; }
   .accordion { padding: 0.75rem 0.5rem 2rem; }
 }

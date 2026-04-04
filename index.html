@@ -125,10 +125,43 @@
               <h2 class="panel-title">Your Groups</h2>
               <div id="groups-container"></div>
             </section>
+            <div class="panel hints-panel" id="workbench-hints" aria-label="Personal hints">
+              <div class="hints-panel-header">
+                <h2 class="panel-title">Personal Hints</h2>
+                <button class="btn-link" id="btn-open-hints">Manage →</button>
+              </div>
+              <div id="hints-panel-list" class="hints-panel-list"></div>
+              <p id="hints-panel-empty" class="hints-panel-empty" hidden>
+                No hints yet. <button class="btn-link" id="btn-hints-shortcut">Add some →</button>
+              </p>
+            </div>
           </div>
           <div class="workbench-footer">
             <button class="btn-secondary" id="reset-workbench-btn">Reset Workbench</button>
             <button class="btn-secondary" id="reset-btn">↩ Start Over</button>
+          </div>
+        </div>
+      </details>
+
+      <!-- ── 4. Personal Hints ── -->
+      <details id="section-hints" class="accordion-section">
+        <summary class="accordion-summary">
+          <span class="accordion-label">
+            <span class="accordion-num">4</span>
+            Personal Hints
+          </span>
+          <span class="accordion-status" id="hints-status"></span>
+          <span class="accordion-chevron"></span>
+        </summary>
+        <div class="accordion-body">
+          <div class="hints-manager">
+            <p class="section-hint">Reminders to help spot connections — drag to reorder</p>
+            <div class="hint-add-row">
+              <input type="text" id="hint-new-input" class="hint-new-input"
+                placeholder="Add a new hint…" maxlength="120" />
+              <button class="btn-primary" id="hint-add-btn">Add</button>
+            </div>
+            <div id="hints-list" class="hints-list"></div>
           </div>
         </div>
       </details>

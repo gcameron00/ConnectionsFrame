@@ -98,7 +98,7 @@ function maybeSetWordsDate() {
 
 // ── Accordion ──────────────────────────────────────────────────────────────
 
-const SECTION_IDS = ['instructions', 'words', 'workbench'];
+const SECTION_IDS = ['instructions', 'words', 'workbench', 'hints'];
 
 function openSection(id, scroll = true) {
   SECTION_IDS.forEach(s => {
@@ -120,6 +120,7 @@ function initAccordion() {
       // Guard: workbench needs 16 valid words
       if (id === 'workbench' && !canOpenWorkbench()) return;
       openSection(id);
+      if (id === 'hints') renderSection4();
     });
   });
 }
@@ -402,6 +403,7 @@ function renderWorkbench() {
   });
 
   updateStatus();
+  renderHintsPanel();
 }
 
 // FLIP animation: reorder group DOM elements by colour with a smooth transition
@@ -906,6 +908,165 @@ async function checkNewVersion() {
   saveState();
 }
 
+// ── Personal Hints ─────────────────────────────────────────────────────────
+// Stored in a separate localStorage key — survives all resets.
+// Format: [{ id: string, text: string }] newest-first by default; user can reorder.
+
+const HINTS_KEY = 'connectionsframe_hints';
+let hints = [];
+const activeHints = new Set(); // IDs of highlighted hints (session only, not persisted)
+let hintDragSrc = null;
+
+function loadHints() {
+  try {
+    const raw = localStorage.getItem(HINTS_KEY);
+    hints = raw ? JSON.parse(raw) : [];
+  } catch (_) { hints = []; }
+}
+
+function saveHints() {
+  localStorage.setItem(HINTS_KEY, JSON.stringify(hints));
+}
+
+// ── Workbench hints panel ───────────────────────────────────────────────────
+
+function renderHintsPanel() {
+  const list  = document.getElementById('hints-panel-list');
+  const empty = document.getElementById('hints-panel-empty');
+  list.innerHTML = '';
+
+  if (hints.length === 0) {
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+
+  hints.forEach(hint => {
+    const chip = document.createElement('div');
+    chip.className = 'hint-chip';
+    if (activeHints.has(hint.id)) chip.classList.add('hint-chip--active');
+    chip.textContent = hint.text;
+    chip.addEventListener('click', () => {
+      if (activeHints.has(hint.id)) {
+        activeHints.delete(hint.id);
+        chip.classList.remove('hint-chip--active');
+      } else {
+        activeHints.add(hint.id);
+        chip.classList.add('hint-chip--active');
+      }
+    });
+    list.appendChild(chip);
+  });
+}
+
+// ── Section 4 manager ──────────────────────────────────────────────────────
+
+function renderSection4() {
+  const list = document.getElementById('hints-list');
+  list.innerHTML = '';
+
+  hints.forEach((hint, i) => {
+    const item = document.createElement('div');
+    item.className = 'hint-item';
+    item.draggable = true;
+    item.dataset.id = hint.id;
+
+    // Drag handle
+    const handle = document.createElement('span');
+    handle.className = 'hint-drag-handle';
+    handle.textContent = '⠿';
+    handle.setAttribute('aria-hidden', 'true');
+
+    // Editable text
+    const text = document.createElement('span');
+    text.className = 'hint-text';
+    text.textContent = hint.text;
+    text.contentEditable = 'true';
+    text.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); text.blur(); }
+    });
+    text.addEventListener('blur', () => {
+      const val = text.textContent.trim();
+      if (!val) {
+        hints = hints.filter(h => h.id !== hint.id);
+      } else {
+        hint.text = val;
+      }
+      saveHints();
+      renderSection4();
+      renderHintsPanel();
+      updateHintsStatus();
+    });
+
+    // Delete button
+    const del = document.createElement('button');
+    del.className = 'hint-delete';
+    del.setAttribute('aria-label', 'Delete hint');
+    del.textContent = '×';
+    del.addEventListener('click', () => {
+      hints = hints.filter(h => h.id !== hint.id);
+      saveHints();
+      renderSection4();
+      renderHintsPanel();
+      updateHintsStatus();
+    });
+
+    // Drag-to-reorder
+    item.addEventListener('dragstart', e => {
+      hintDragSrc = hint.id;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => item.classList.add('hint-dragging'), 0);
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('hint-dragging');
+      document.querySelectorAll('.hint-item').forEach(el => el.classList.remove('hint-over'));
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      item.classList.add('hint-over');
+    });
+    item.addEventListener('dragleave', () => item.classList.remove('hint-over'));
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.classList.remove('hint-over');
+      if (!hintDragSrc || hintDragSrc === hint.id) return;
+      const srcIdx = hints.findIndex(h => h.id === hintDragSrc);
+      const dstIdx = hints.findIndex(h => h.id === hint.id);
+      const [moved] = hints.splice(srcIdx, 1);
+      hints.splice(srcIdx < dstIdx ? dstIdx - 1 : dstIdx, 0, moved);
+      hintDragSrc = null;
+      saveHints();
+      renderSection4();
+      renderHintsPanel();
+    });
+
+    item.appendChild(handle);
+    item.appendChild(text);
+    item.appendChild(del);
+    list.appendChild(item);
+  });
+
+  updateHintsStatus();
+}
+
+function addHint() {
+  const input = document.getElementById('hint-new-input');
+  const text = input.value.trim();
+  if (!text) return;
+  hints.unshift({ id: String(Date.now()), text });
+  input.value = '';
+  saveHints();
+  renderSection4();
+  renderHintsPanel();
+  updateHintsStatus();
+}
+
+function updateHintsStatus() {
+  const el = document.getElementById('hints-status');
+  el.textContent = hints.length > 0 ? String(hints.length) : '';
+}
+
 // ── Custom confirm (replaces window.confirm, blocked by some mobile browsers) ──
 
 function customConfirm(message) {
@@ -937,6 +1098,7 @@ function customConfirm(message) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const hasState = loadState();
+  loadHints();
 
   // Restore image mode if tiles survived the session
   if (getImageTiles()?.tiles) {
@@ -965,6 +1127,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderWorkbench();
     openSection('workbench');
   });
+
+  // ── Hints buttons ──
+  document.getElementById('btn-open-hints').addEventListener('click', () => {
+    openSection('hints');
+    renderSection4();
+  });
+  document.getElementById('btn-hints-shortcut').addEventListener('click', () => {
+    openSection('hints');
+    renderSection4();
+    document.getElementById('hint-new-input').focus();
+  });
+  document.getElementById('hint-add-btn').addEventListener('click', addHint);
+  document.getElementById('hint-new-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addHint();
+  });
+
+  updateHintsStatus();
 
   document.getElementById('btn-image-mode').addEventListener('click', enterImageMode);
   document.getElementById('btn-exit-image-mode').addEventListener('click', exitImageMode);

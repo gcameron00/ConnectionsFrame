@@ -31,6 +31,10 @@ The main thinking workspace. Defaults open when 16 words are entered.
 - **Predict the difficulty colour** — Yellow (easiest) → Green → Blue → Purple (hardest). Groups animate into colour order (Purple at top) as you assign them.
 - **Double-click** any tile in the word pool to send it to the **focused group** — click any group area to set which group receives double-clicked tiles; the next open slot in the focused group is highlighted
 - **Double-click** any tile in a group to return it instantly to the word pool
+- **Personal Hints panel** — below the word pool on desktop/tablet, below the groups on mobile; click a hint to highlight it while thinking
+
+### 4. Personal Hints
+A persistent library of connection-type reminders. Add notes like *"Last names of related people"* or *"Things that precede a word"* — they appear in the Workbench and survive Start Over and page refreshes. Manage, edit, and reorder them in section 4.
 
 ## User flow
 
@@ -82,9 +86,11 @@ npx serve .
 
 ```
 ConnectionsFrame/
-├── index.html          # Single-page app (all three sections)
+├── index.html          # Single-page app (sections 1–4)
 ├── about/
-│   └── index.html      # About page
+│   ├── index.html      # About page
+│   └── changelog/
+│       └── index.html  # Dynamic changelog page
 └── assets/
     ├── css/
     │   └── styles.css

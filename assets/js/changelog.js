@@ -3,9 +3,17 @@
 // Keep newest entry first. After adding an entry, bump CHANGELOG_VERSION to match.
 // This file is loaded before main.js (index.html) and standalone (about/changelog/).
 
-const CHANGELOG_VERSION = '2026.002';
+const CHANGELOG_VERSION = '2026.003';
 
 const CHANGELOG = [
+  {
+    version: '2026.003',
+    date: '2026-04-04',
+    title: 'Personal Hints',
+    items: [
+      'Added support for recording Personal Hints — note the types of connections the puzzle uses as refreshers when playing. They can be edited in section 4 and appear in the Workbench. Hint text persists between games.',
+    ],
+  },
   {
     version: '2026.002',
     date: '2026-04-01',
