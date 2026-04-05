@@ -950,7 +950,7 @@ function buildShareCanvas() {
   // ── Header ──
   ctx.fillStyle = '#1a1a1b';
   ctx.font = 'bold 18px system-ui, sans-serif';
-  ctx.fillText('My groupings', PAD, PAD + 20);
+  ctx.fillText('My groupings — Thought through with ConnectionsFrame', PAD, PAD + 20);
 
   const [y4, m4, d4] = getToday().split('-');
   const dateLabel = new Date(Number(y4), Number(m4) - 1, Number(d4))
@@ -993,20 +993,6 @@ function buildShareCanvas() {
     ctx.fillStyle = '#1a1a1b';
     ctx.font = 'bold 12px system-ui, sans-serif';
     ctx.fillText(name, cx + BW + 10, cy + 20);
-
-    // Difficulty pill (right-aligned)
-    if (group.color) {
-      const pillW = 54, pillH = 18, pillX = cx + cardW - pillW - 8, pillY = cy + 8;
-      ctx.beginPath();
-      ctx.roundRect(pillX, pillY, pillW, pillH, 9);
-      ctx.fillStyle = accent;
-      ctx.fill();
-      ctx.fillStyle = COLOR_TEXT[group.color];
-      ctx.font = 'bold 10px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(group.color[0].toUpperCase() + group.color.slice(1), pillX + pillW / 2, pillY + 13);
-      ctx.textAlign = 'left';
-    }
 
     // Tiles
     const tilesX = cx + BW + 8;
@@ -1089,7 +1075,6 @@ async function shareWorkbench() {
     try {
       await navigator.share({
         title: 'Here\'s how I grouped today\'s puzzle.',
-        text: 'Thought through with ConnectionsFrame.',
         url: window.location.origin,
         files: [file],
       });

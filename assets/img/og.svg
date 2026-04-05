@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#f7f0d0"/>
+
+  <!-- Decorative 2×2 colour grid, centred right -->
+  <g transform="translate(740, 115)">
+    <rect x="0"   y="0"   width="200" height="200" rx="16" fill="#f0c040"/>
+    <rect x="220" y="0"   width="200" height="200" rx="16" fill="#67a96b"/>
+    <rect x="0"   y="220" width="200" height="200" rx="16" fill="#5a9fcb"/>
+    <rect x="220" y="220" width="200" height="200" rx="16" fill="#9b5ea2"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="80" y="260" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#1a1a1b">Connections</text>
+  <text x="80" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#1a1a1b">Frame</text>
+
+  <!-- Tagline -->
+  <text x="83" y="415" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#555">A thinking tool for NYT Connections</text>
+
+  <!-- Subtle bottom rule -->
+  <rect x="80" y="530" width="1040" height="2" rx="1" fill="#d4c68a"/>
+  <text x="80" y="568" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#999">connectionsframe.pages.dev</text>
+</svg>
