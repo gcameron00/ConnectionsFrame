@@ -908,6 +908,197 @@ async function checkNewVersion() {
   saveState();
 }
 
+// ── Workbench share ────────────────────────────────────────────────────────
+
+function initShareButton() {
+  try {
+    const probe = new File([''], 'p.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [probe] })) {
+      document.getElementById('btn-share-workbench').hidden = false;
+    }
+  } catch (_) {}
+}
+
+// Draws all four groups onto an off-screen canvas and returns it.
+function buildShareCanvas() {
+  const SCALE  = 2;       // retina
+  const CW     = 600;     // logical canvas width
+  const PAD    = 24;
+  const CARD_H = 108;
+  const GAP    = 8;
+  const BW     = 5;       // colour-bar width
+
+  const COLOR_HEX  = { yellow: '#f9df6d', green: '#60b868', blue: '#5ba4cf', purple: '#9b59d0' };
+  const COLOR_TEXT = { yellow: '#5a4400', green: '#fff',    blue: '#fff',    purple: '#fff'    };
+  const NEUTRAL    = '#d4c68a';
+
+  // Fixed layout measurements
+  const headerH  = 56;
+  const footerH  = 32;
+  const CH = PAD + headerH + PAD / 2 + 4 * CARD_H + 3 * GAP + PAD / 2 + footerH + PAD;
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = CW * SCALE;
+  canvas.height = CH * SCALE;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  // ── Background ──
+  ctx.fillStyle = '#f7f0d0';
+  ctx.fillRect(0, 0, CW, CH);
+
+  // ── Header ──
+  ctx.fillStyle = '#1a1a1b';
+  ctx.font = 'bold 18px system-ui, sans-serif';
+  ctx.fillText('My groupings', PAD, PAD + 20);
+
+  const [y4, m4, d4] = getToday().split('-');
+  const dateLabel = new Date(Number(y4), Number(m4) - 1, Number(d4))
+    .toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+  ctx.fillStyle = '#999';
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.fillText(dateLabel, PAD, PAD + 38);
+
+  // ── Divider ──
+  ctx.strokeStyle = '#d4c68a';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD, PAD + headerH);
+  ctx.lineTo(CW - PAD, PAD + headerH);
+  ctx.stroke();
+
+  // ── Groups ──
+  const cardsY = PAD + headerH + PAD / 2;
+  const cardW  = CW - PAD * 2;
+
+  getSortedGroupIndices().forEach((g, i) => {
+    const group  = state.groups[g];
+    const accent = COLOR_HEX[group.color] || NEUTRAL;
+    const cy     = cardsY + i * (CARD_H + GAP);
+    const cx     = PAD;
+
+    // Card: accent rounded rect, then content area inset by border width
+    ctx.beginPath();
+    ctx.roundRect(cx, cy, cardW, CARD_H, 8);
+    ctx.fillStyle = accent;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.roundRect(cx + BW, cy, cardW - BW, CARD_H, [0, 8, 8, 0]);
+    ctx.fillStyle = '#fdf9ea';
+    ctx.fill();
+
+    // Group name
+    const name = group.name.trim() || 'Unnamed group';
+    ctx.fillStyle = '#1a1a1b';
+    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.fillText(name, cx + BW + 10, cy + 20);
+
+    // Difficulty pill (right-aligned)
+    if (group.color) {
+      const pillW = 54, pillH = 18, pillX = cx + cardW - pillW - 8, pillY = cy + 8;
+      ctx.beginPath();
+      ctx.roundRect(pillX, pillY, pillW, pillH, 9);
+      ctx.fillStyle = accent;
+      ctx.fill();
+      ctx.fillStyle = COLOR_TEXT[group.color];
+      ctx.font = 'bold 10px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(group.color[0].toUpperCase() + group.color.slice(1), pillX + pillW / 2, pillY + 13);
+      ctx.textAlign = 'left';
+    }
+
+    // Tiles
+    const tilesX = cx + BW + 8;
+    const tilesW = cardW - BW - 16;
+    const tileW  = (tilesW - 3 * 6) / 4;
+    const tileH  = 44;
+    const tileY  = cy + 32;
+
+    for (let t = 0; t < 4; t++) {
+      const tx  = tilesX + t * (tileW + 6);
+      const idx = group.words[t];
+
+      if (idx !== undefined) {
+        ctx.beginPath();
+        ctx.roundRect(tx, tileY, tileW, tileH, 5);
+        ctx.fillStyle = '#4a4a4c';
+        ctx.fill();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        const lines = wrapCanvasText(ctx, (state.words[idx] || '').toUpperCase(), tileW - 8);
+        const lineH = 11;
+        const startY = tileY + (tileH - lines.length * lineH) / 2 + lineH - 1;
+        lines.forEach((ln, li) => ctx.fillText(ln, tx + tileW / 2, startY + li * lineH));
+        ctx.textAlign = 'left';
+      } else {
+        // Empty placeholder — dashed border
+        ctx.save();
+        ctx.strokeStyle = '#c4b870';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.roundRect(tx, tileY, tileW, tileH, 5);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  });
+
+  // ── Footer ──
+  const footerY = cardsY + 4 * CARD_H + 3 * GAP + PAD / 2;
+  ctx.strokeStyle = '#e4dab8';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD, footerY);
+  ctx.lineTo(CW - PAD, footerY);
+  ctx.stroke();
+
+  ctx.fillStyle = '#b0a060';
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(window.location.origin, CW / 2, footerY + 20);
+  ctx.textAlign = 'left';
+
+  return canvas;
+}
+
+function wrapCanvasText(ctx, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width <= maxWidth) {
+      line = test;
+    } else {
+      if (line) lines.push(line);
+      line = word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.length ? lines : [text];
+}
+
+async function shareWorkbench() {
+  const canvas = buildShareCanvas();
+  canvas.toBlob(async blob => {
+    const file = new File([blob], 'my-groupings.png', { type: 'image/png' });
+    try {
+      await navigator.share({
+        title: 'Here\'s how I grouped today\'s puzzle.',
+        text: 'Thought through with ConnectionsFrame.',
+        url: window.location.origin,
+        files: [file],
+      });
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error('Share failed:', err);
+    }
+  }, 'image/png');
+}
+
 // ── Personal Hints ─────────────────────────────────────────────────────────
 // Stored in a separate localStorage key — survives all resets.
 // Format: [{ id: string, text: string }] newest-first by default; user can reorder.
@@ -1114,6 +1305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAccordion();
   initCropTool();
   initImagePaste();
+  initShareButton();
   updateStatus();
 
   // ── Navigation buttons ──
@@ -1127,6 +1319,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderWorkbench();
     openSection('workbench');
   });
+
+  document.getElementById('btn-share-workbench').addEventListener('click', shareWorkbench);
 
   // ── Hints buttons ──
   document.getElementById('btn-open-hints').addEventListener('click', () => {
