@@ -1075,7 +1075,6 @@ async function shareWorkbench() {
     try {
       await navigator.share({
         title: 'Here\'s how I grouped today\'s puzzle.',
-        url: window.location.origin,
         files: [file],
       });
     } catch (err) {

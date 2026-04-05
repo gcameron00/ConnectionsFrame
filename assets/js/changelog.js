@@ -3,9 +3,18 @@
 // Keep newest entry first. After adding an entry, bump CHANGELOG_VERSION to match.
 // This file is loaded before main.js (index.html) and standalone (about/changelog/).
 
-const CHANGELOG_VERSION = '2026.003';
+const CHANGELOG_VERSION = '2026.004';
 
 const CHANGELOG = [
+  {
+    version: '2026.004',
+    date: '2026-04-05',
+    title: 'Share your groupings',
+    items: [
+      'New Share button in the Workbench footer — generates an image of your current groupings and opens the native share sheet (iOS, iPadOS, and other share-capable browsers)',
+      'Shared image shows all four groups with their names, tiles, and colour coding',
+    ],
+  },
   {
     version: '2026.003',
     date: '2026-04-04',
