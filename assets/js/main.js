@@ -4,7 +4,27 @@
 //   state.leftWords        — number[] of indices in the word pool
 //   state.groups[g].words  — number[] of indices in each group
 
-const STORAGE_KEY = 'connectionsframe_v2';
+const STORAGE_KEY = 'connectionsworkbench_v1';
+
+// ── One-time migration from old brand keys ───────────────────────────────────
+(function migrateLegacyStorage() {
+  const lsMigrations = [
+    ['connectionsframe_v2',    'connectionsworkbench_v1'],
+    ['connectionsframe_hints', 'connectionsworkbench_hints'],
+  ];
+  lsMigrations.forEach(([oldKey, newKey]) => {
+    const old = localStorage.getItem(oldKey);
+    if (old !== null && localStorage.getItem(newKey) === null) {
+      localStorage.setItem(newKey, old);
+      localStorage.removeItem(oldKey);
+    }
+  });
+  const oldImg = sessionStorage.getItem('connectionsframe_images');
+  if (oldImg !== null && sessionStorage.getItem('connectionsworkbench_images') === null) {
+    sessionStorage.setItem('connectionsworkbench_images', oldImg);
+    sessionStorage.removeItem('connectionsframe_images');
+  }
+})();
 
 let state = {
   words: Array(16).fill(''),
@@ -555,7 +575,7 @@ function removeIndexFromState(idx) {
 
 // ── Image mode ─────────────────────────────────────────────────────────────
 
-const IMAGE_STORAGE_KEY = 'connectionsframe_images';
+const IMAGE_STORAGE_KEY = 'connectionsworkbench_images';
 let imageMode = false;
 
 // Returns { tiles: string[], aspectRatio: number } or null
@@ -950,7 +970,7 @@ function buildShareCanvas() {
   // ── Header ──
   ctx.fillStyle = '#1a1a1b';
   ctx.font = 'bold 18px system-ui, sans-serif';
-  ctx.fillText('My groupings — Thought through with ConnectionsFrame', PAD, PAD + 20);
+  ctx.fillText('My groupings — Thought through with Connections Workbench', PAD, PAD + 20);
 
   const [y4, m4, d4] = getToday().split('-');
   const dateLabel = new Date(Number(y4), Number(m4) - 1, Number(d4))
@@ -1087,7 +1107,7 @@ async function shareWorkbench() {
 // Stored in a separate localStorage key — survives all resets.
 // Format: [{ id: string, text: string }] newest-first by default; user can reorder.
 
-const HINTS_KEY = 'connectionsframe_hints';
+const HINTS_KEY = 'connectionsworkbench_hints';
 let hints = [];
 const activeHints = new Set(); // IDs of highlighted hints (session only, not persisted)
 let hintDragSrc = null;

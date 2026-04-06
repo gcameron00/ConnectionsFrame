@@ -1,4 +1,4 @@
-# ConnectionsFrame — Claude Code instructions
+# Connections Workbench — Claude Code instructions
 
 ## Changelog
 
@@ -28,7 +28,7 @@ Examples: `2026.001`, `2026.002`, `2027.001`
 
 ## Tech stack
 - Plain HTML, CSS, JavaScript — no build step, no framework
-- All state in `localStorage` under key `connectionsframe_v2`
+- All state in `localStorage` under key `connectionsworkbench_v1` (migrated from `connectionsframe_v2` on first load)
 - Deployed via Cloudflare Pages
 
 ## Key files

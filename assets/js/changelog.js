@@ -3,9 +3,18 @@
 // Keep newest entry first. After adding an entry, bump CHANGELOG_VERSION to match.
 // This file is loaded before main.js (index.html) and standalone (about/changelog/).
 
-const CHANGELOG_VERSION = '2026.004';
+const CHANGELOG_VERSION = '2026.005';
 
 const CHANGELOG = [
+  {
+    version: '2026.005',
+    date: '2026-04-06',
+    title: 'Rebranded to Connections Workbench',
+    items: [
+      'The app is now called Connections Workbench and is available at connectionsworkbench.com',
+      'Your saved words, workbench, and hints have been carried over automatically — nothing needs to be re-entered',
+    ],
+  },
   {
     version: '2026.004',
     date: '2026-04-05',

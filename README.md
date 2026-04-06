@@ -1,10 +1,10 @@
-# ConnectionsFrame
+# Connections Workbench
 
 A browser-based thinking tool to help you work through the daily [NYT Connections](https://www.nytimes.com/games/connections) puzzle.
 
 ## What it does
 
-ConnectionsFrame gives you a structured workspace to reason about potential groupings before committing to an answer in the real game.
+Connections Workbench gives you a structured workspace to reason about potential groupings before committing to an answer in the real game.
 
 The app lives on a single page with three collapsible sections that guide you through the flow:
 
@@ -50,7 +50,7 @@ Each section is independently collapsible. Opening one via a button closes the p
 
 ## Privacy
 
-ConnectionsFrame uses **localStorage** only — nothing is sent to any server. Multiple users can use the same deployed instance simultaneously without seeing or interfering with each other's work. Sessions persist across page refreshes until the user clicks *Start Over*.
+Connections Workbench uses **localStorage** only — nothing is sent to any server. Multiple users can use the same deployed instance simultaneously without seeing or interfering with each other's work. Sessions persist across page refreshes until the user clicks *Start Over*.
 
 Image mode uses **sessionStorage** for the cropped tile data — also local-only, but cleared when the tab is closed.
 
@@ -76,8 +76,8 @@ All state is persisted as JSON under a single key. No server calls are made at a
 ## Getting started
 
 ```bash
-git clone https://github.com/<your-username>/ConnectionsFrame.git
-cd ConnectionsFrame
+git clone https://github.com/<your-username>/Connections Workbench.git
+cd Connections Workbench
 # Serve locally — file:// won't work due to absolute asset paths
 npx serve .
 ```
@@ -85,7 +85,7 @@ npx serve .
 ## Project structure
 
 ```
-ConnectionsFrame/
+Connections Workbench/
 ├── index.html          # Single-page app (sections 1–4)
 ├── about/
 │   ├── index.html      # About page
