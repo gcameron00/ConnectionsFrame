@@ -786,6 +786,45 @@ button { font-family: inherit; cursor: pointer; }
 /* override align-self:flex-start from .btn-primary inside the dialog */
 .confirm-buttons .btn-primary { align-self: auto; }
 
+/* ── Share warning dialog ── */
+.share-warning-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fdf9ea;
+  border: 1px solid #d4c68a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 360px;
+  width: calc(100% - 2rem);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.share-warning-dialog::backdrop { background: rgba(0,0,0,0.35); }
+.share-warning-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1b;
+  margin: 0 0 0.6rem;
+}
+.share-warning-body {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #1a1a1b;
+  margin: 0 0 1rem;
+}
+.share-warning-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 1.25rem;
+  cursor: pointer;
+}
+.share-warning-check input { cursor: pointer; }
+.share-warning-dialog .confirm-buttons .btn-primary { align-self: auto; }
+
 /* ── Personal hints — workbench panel ── */
 .hints-panel-header {
   display: flex;

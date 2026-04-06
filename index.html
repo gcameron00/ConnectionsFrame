@@ -8,7 +8,7 @@
     <meta property="og:description" content="A thinking companion for NYT Connections — organise your ideas before committing to an answer." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://connectionsworkbench.com/" />
-    <meta property="og:image" content="https://connectionsworkbench.com/assets/img/og.svg" />
+    <meta property="og:image" content="https://connectionsworkbench.com/assets/img/og-v2.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="assets/css/styles.css" />
   </head>
@@ -184,6 +184,19 @@
       <div class="confirm-buttons">
         <button id="confirm-cancel" class="btn-secondary">Cancel</button>
         <button id="confirm-ok" class="btn-primary">Confirm</button>
+      </div>
+    </dialog>
+
+    <dialog id="share-warning-dialog" class="share-warning-dialog">
+      <h2 class="share-warning-heading">Before you share</h2>
+      <p class="share-warning-body">Your groupings might give away answers to anyone who hasn't played today's puzzle yet. Worth checking they've had a chance to solve it first.</p>
+      <label class="share-warning-check">
+        <input type="checkbox" id="share-warning-suppress" />
+        Got it — don't show this again
+      </label>
+      <div class="confirm-buttons">
+        <button id="share-warning-cancel" class="btn-secondary">Cancel</button>
+        <button id="share-warning-ok" class="btn-primary">Share anyway</button>
       </div>
     </dialog>
 

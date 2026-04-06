@@ -1088,7 +1088,7 @@ function wrapCanvasText(ctx, text, maxWidth) {
   return lines.length ? lines : [text];
 }
 
-async function shareWorkbench() {
+function doShare() {
   const canvas = buildShareCanvas();
   canvas.toBlob(async blob => {
     const file = new File([blob], 'my-groupings.png', { type: 'image/png' });
@@ -1103,11 +1103,48 @@ async function shareWorkbench() {
   }, 'image/png');
 }
 
+async function shareWorkbench() {
+  if (localStorage.getItem(SHARE_WARNED_KEY) === 'true') {
+    doShare();
+    return;
+  }
+
+  const dialog   = document.getElementById('share-warning-dialog');
+  const checkbox = document.getElementById('share-warning-suppress');
+  const okBtn    = document.getElementById('share-warning-ok');
+  const cancelBtn = document.getElementById('share-warning-cancel');
+
+  checkbox.checked = false;
+  dialog.showModal();
+
+  await new Promise(resolve => {
+    function onOk() {
+      cleanup();
+      if (checkbox.checked) localStorage.setItem(SHARE_WARNED_KEY, 'true');
+      resolve(true);
+    }
+    function onCancel() {
+      cleanup();
+      resolve(false);
+    }
+    function cleanup() {
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      dialog.close();
+    }
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+  }).then(confirmed => {
+    if (confirmed) doShare();
+  });
+}
+
 // ── Personal Hints ─────────────────────────────────────────────────────────
 // Stored in a separate localStorage key — survives all resets.
 // Format: [{ id: string, text: string }] newest-first by default; user can reorder.
 
-const HINTS_KEY = 'connectionsworkbench_hints';
+const HINTS_KEY            = 'connectionsworkbench_hints';
+const SHARE_WARNED_KEY     = 'connectionsworkbench_share_warned';
 let hints = [];
 const activeHints = new Set(); // IDs of highlighted hints (session only, not persisted)
 let hintDragSrc = null;

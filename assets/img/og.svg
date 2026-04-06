@@ -2,22 +2,38 @@
   <!-- Background -->
   <rect width="1200" height="630" fill="#f7f0d0"/>
 
-  <!-- Decorative 2×2 colour grid, centred right -->
-  <g transform="translate(740, 115)">
-    <rect x="0"   y="0"   width="200" height="200" rx="16" fill="#f0c040"/>
-    <rect x="220" y="0"   width="200" height="200" rx="16" fill="#67a96b"/>
-    <rect x="0"   y="220" width="200" height="200" rx="16" fill="#5a9fcb"/>
-    <rect x="220" y="220" width="200" height="200" rx="16" fill="#9b5ea2"/>
-  </g>
-
   <!-- Wordmark -->
-  <text x="80" y="260" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#1a1a1b">Connections</text>
-  <text x="80" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#1a1a1b">Frame</text>
+  <text x="80" y="235" font-family="system-ui,-apple-system,sans-serif" font-size="68" font-weight="700" fill="#1a1a1b">Connections</text>
+  <text x="80" y="315" font-family="system-ui,-apple-system,sans-serif" font-size="68" font-weight="700" fill="#1a1a1b">Workbench</text>
+  <text x="82" y="375" font-family="system-ui,-apple-system,sans-serif" font-size="26" fill="#555">A thinking companion for NYT Connections</text>
 
-  <!-- Tagline -->
-  <text x="83" y="415" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#555">A thinking tool for NYT Connections</text>
+  <!-- Bottom rule + URL -->
+  <rect x="80" y="555" width="1040" height="2" rx="1" fill="#d4c68a"/>
+  <text x="80" y="590" font-family="system-ui,-apple-system,sans-serif" font-size="22" fill="#999">connectionsworkbench.com</text>
 
-  <!-- Subtle bottom rule -->
-  <rect x="80" y="530" width="1040" height="2" rx="1" fill="#d4c68a"/>
-  <text x="80" y="568" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#999">connectionsframe.pages.dev</text>
+  <!-- Right: 2×2 grid — colour box then cream overlay, letter centred -->
+
+  <!-- A: Yellow (top-left) -->
+  <rect x="670" y="110" width="210" height="195" rx="12" fill="#f0c040"/>
+  <rect x="678" y="110" width="202" height="195" rx="10" fill="#fdf9ea" stroke="#e6dcb4" stroke-width="1"/>
+  <text x="779" y="207" text-anchor="middle" dominant-baseline="central"
+    font-family="system-ui,-apple-system,sans-serif" font-size="88" font-weight="700" fill="#b08800">A</text>
+
+  <!-- B: Green (top-right) -->
+  <rect x="900" y="110" width="210" height="195" rx="12" fill="#67a96b"/>
+  <rect x="908" y="110" width="202" height="195" rx="10" fill="#fdf9ea" stroke="#e6dcb4" stroke-width="1"/>
+  <text x="1009" y="207" text-anchor="middle" dominant-baseline="central"
+    font-family="system-ui,-apple-system,sans-serif" font-size="88" font-weight="700" fill="#2d7233">B</text>
+
+  <!-- C: Blue (bottom-left) -->
+  <rect x="670" y="325" width="210" height="195" rx="12" fill="#5a9fcb"/>
+  <rect x="678" y="325" width="202" height="195" rx="10" fill="#fdf9ea" stroke="#e6dcb4" stroke-width="1"/>
+  <text x="779" y="422" text-anchor="middle" dominant-baseline="central"
+    font-family="system-ui,-apple-system,sans-serif" font-size="88" font-weight="700" fill="#1c6a96">C</text>
+
+  <!-- D: Purple (bottom-right) -->
+  <rect x="900" y="325" width="210" height="195" rx="12" fill="#9b5ea2"/>
+  <rect x="908" y="325" width="202" height="195" rx="10" fill="#fdf9ea" stroke="#e6dcb4" stroke-width="1"/>
+  <text x="1009" y="422" text-anchor="middle" dominant-baseline="central"
+    font-family="system-ui,-apple-system,sans-serif" font-size="88" font-weight="700" fill="#6b2a77">D</text>
 </svg>

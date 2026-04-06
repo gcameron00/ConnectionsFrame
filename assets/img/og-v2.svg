@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#f7f0d0"/>
+
+  <!-- Wordmark -->
+  <text x="80" y="235" font-family="system-ui,-apple-system,sans-serif" font-size="68" font-weight="700" fill="#1a1a1b">Connections</text>
+  <text x="80" y="315" font-family="system-ui,-apple-system,sans-serif" font-size="68" font-weight="700" fill="#1a1a1b">Workbench</text>
+  <text x="82" y="375" font-family="system-ui,-apple-system,sans-serif" font-size="26" fill="#555">A thinking companion for NYT Connections</text>
+
+  <!-- Bottom rule + URL -->
+  <rect x="80" y="555" width="1040" height="2" rx="1" fill="#d4c68a"/>
+  <text x="80" y="590" font-family="system-ui,-apple-system,sans-serif" font-size="22" fill="#999">connectionsworkbench.com</text>
+
+  <!-- Right: workbench-style stacked group rows -->
+  <!-- Layout: x=650, w=470, 4 rows h=100 each, gap=14, top y=94 -->
+  <!-- Each row: colour box then cream overlay, group label + 4 tile chips -->
+
+  <!-- Row 1: Purple (hardest, top) — y=94 -->
+  <rect x="650" y="94" width="470" height="100" rx="10" fill="#9b5ea2"/>
+  <rect x="658" y="94" width="462" height="100" rx="8" fill="#fdf9ea" stroke="#e6dcb4" stroke-width="1"/>
+  <text x="666" y="116" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#9b5ea2">Purple group</text>
+  <rect x="666" y="118" width="430" height="1" fill="#ede5c8"/>
+  <rect x="666" y="132" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="775" y="132" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="884" y="132" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="993" y="132" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+
+  <!-- Row 2: Blue — y=208 -->
+  <rect x="650" y="208" width="470" height="100" rx="10" fill="#5a9fcb"/>
+  <rect x="658" y="208" width="462" height="100" rx="8" fill="#fdf9ea" stroke="#e6dcb4" stroke-width="1"/>
+  <text x="666" y="230" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#5a9fcb">Blue group</text>
+  <rect x="666" y="232" width="430" height="1" fill="#ede5c8"/>
+  <rect x="666" y="246" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="775" y="246" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="884" y="246" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="993" y="246" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+
+  <!-- Row 3: Green — y=322 -->
+  <rect x="650" y="322" width="470" height="100" rx="10" fill="#67a96b"/>
+  <rect x="658" y="322" width="462" height="100" rx="8" fill="#fdf9ea" stroke="#e6dcb4" stroke-width="1"/>
+  <text x="666" y="344" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#67a96b">Green group</text>
+  <rect x="666" y="346" width="430" height="1" fill="#ede5c8"/>
+  <rect x="666" y="360" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="775" y="360" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="884" y="360" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="993" y="360" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+
+  <!-- Row 4: Yellow (easiest, bottom) — y=436 -->
+  <rect x="650" y="436" width="470" height="100" rx="10" fill="#f0c040"/>
+  <rect x="658" y="436" width="462" height="100" rx="8" fill="#fdf9ea" stroke="#e6dcb4" stroke-width="1"/>
+  <text x="666" y="458" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#b08800">Yellow group</text>
+  <rect x="666" y="460" width="430" height="1" fill="#ede5c8"/>
+  <rect x="666" y="474" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="775" y="474" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="884" y="474" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+  <rect x="993" y="474" width="101" height="48" rx="7" fill="#f0ead8" stroke="#e0d5b5" stroke-width="1"/>
+</svg>
